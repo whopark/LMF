@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# MongoDB data
+mongodb_data/
+
+# Screenshots
+*.png
+*.jpg
+*.jpeg
+
+# Playwright
+.playwright-mcp/
+
+# Temp files
+nul
+
+# Autopus-ADK generated files
+.claude/rules/autopus/
+.claude/skills/autopus/
+.claude/commands/auto.md
+.claude/agents/autopus/
+.codex/config.toml
+.codex/skills/
+.gemini/skills/autopus/
+.opencode/
+.agents/skills/
+.agents/plugins/
+.autopus/
+.autopus/design/imports/
+.mcp.json
