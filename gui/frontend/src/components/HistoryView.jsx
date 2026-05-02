@@ -80,76 +80,147 @@ function ChangeItem({ change, idx }) {
   const prev = change.previous;
   const curr = change.current;
 
+  // Build list of specific changes for inline display
+  const buildChangeLines = () => {
+    const lines = [];
+
+    // Type change
+    if (prev?.item_type && curr?.item_type && prev.item_type !== curr.item_type) {
+      lines.push({
+        before: `문항유형: ${prev.item_type}`,
+        after: `문항유형: ${curr.item_type}`,
+        note: curr.description && prev.description !== curr.description
+          ? `(설명에 관련 세부 조치사항 내용이 추가됨)` : ''
+      });
+    }
+
+    // Score change
+    if (prev?.score !== undefined && curr?.score !== undefined && prev.score !== curr.score) {
+      lines.push({
+        before: `배점: ${prev.score}점`,
+        after: `배점: ${curr.score}점`
+      });
+    }
+
+    // Question change
+    if (prev?.question && curr?.question && prev.question !== curr.question) {
+      lines.push({
+        before: prev.question,
+        after: curr.question
+      });
+    }
+
+    // Description change - find specific line differences
+    if (prev?.description && curr?.description && prev.description !== curr.description) {
+      const prevLines = prev.description.split('\n').map(l => l.trim()).filter(l => l);
+      const currLines = curr.description.split('\n').map(l => l.trim()).filter(l => l);
+
+      // Find removed lines
+      prevLines.forEach(line => {
+        const cleanLine = line.replace(/^[•\-\*]\s*/, '');
+        const existsInCurr = currLines.some(cl => cl.replace(/^[•\-\*]\s*/, '') === cleanLine);
+        if (!existsInCurr && cleanLine.length > 10) {
+          lines.push({
+            before: cleanLine,
+            after: '(해당 지문 삭제)',
+            isDescChange: true
+          });
+        }
+      });
+
+      // Find added lines
+      currLines.forEach(line => {
+        const cleanLine = line.replace(/^[•\-\*]\s*/, '');
+        const existsInPrev = prevLines.some(pl => pl.replace(/^[•\-\*]\s*/, '') === cleanLine);
+        if (!existsInPrev && cleanLine.length > 10) {
+          lines.push({
+            before: '(해당 지문 없음)',
+            after: cleanLine,
+            isDescChange: true
+          });
+        }
+      });
+
+      // Find modified lines (similar but not exact)
+      prevLines.forEach(prevLine => {
+        const cleanPrevLine = prevLine.replace(/^[•\-\*]\s*/, '');
+        currLines.forEach(currLine => {
+          const cleanCurrLine = currLine.replace(/^[•\-\*]\s*/, '');
+          // Check if lines are similar (share significant words) but not identical
+          if (cleanPrevLine !== cleanCurrLine && cleanPrevLine.length > 10 && cleanCurrLine.length > 10) {
+            const prevWords = cleanPrevLine.split(/\s+/).filter(w => w.length > 2);
+            const currWords = cleanCurrLine.split(/\s+/).filter(w => w.length > 2);
+            const commonWords = prevWords.filter(w => currWords.includes(w));
+            const similarity = commonWords.length / Math.max(prevWords.length, currWords.length);
+
+            if (similarity > 0.5 && similarity < 1) {
+              // Check if not already added
+              const alreadyAdded = lines.some(l =>
+                l.before === cleanPrevLine || l.after === cleanCurrLine
+              );
+              if (!alreadyAdded) {
+                lines.push({
+                  before: cleanPrevLine,
+                  after: cleanCurrLine,
+                  isDescChange: true
+                });
+              }
+            }
+          }
+        });
+      });
+    }
+
+    // If no specific changes detected, show general change
+    if (lines.length === 0) {
+      if (change.change_type === 'NEW') {
+        lines.push({
+          before: '(신규 문항)',
+          after: curr?.question || '새 문항 추가됨',
+          isNew: true
+        });
+      } else if (change.change_type === 'DELETED') {
+        lines.push({
+          before: prev?.question || '삭제된 문항',
+          after: '(문항 삭제됨)',
+          isDeleted: true
+        });
+      }
+    }
+
+    return lines;
+  };
+
+  const changeLines = buildChangeLines();
+
   return (
     <motion.div
-      className="compare-item"
+      className="change-item-doc"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.02 }}
     >
-      <div className="compare-item-header">
-        <span className="item-number">문항 {change.item_number}</span>
-        <span className={`change-badge ${change.change_type.toLowerCase()}`}>
-          {change.change_type === 'NEW' ? '신규' : change.change_type === 'DELETED' ? '삭제' : '수정'}
-        </span>
+      <div className="change-item-doc-header">
+        <strong>문항 {change.item_number}</strong>
       </div>
 
-      <div className="compare-body">
-        <div className={`compare-panel left ${change.change_type === 'NEW' ? 'empty' : ''}`}>
-          {prev ? (
-            <>
-              {prev.item_type && <div className="panel-field"><span className="field-label">문항유형:</span> {prev.item_type}</div>}
-              {prev.score !== undefined && <div className="panel-field"><span className="field-label">배점:</span> {prev.score}점</div>}
-              {prev.question && <div className="panel-question">{prev.question}</div>}
-              {prev.description && (
-                <div className="panel-desc">
-                  <ul className="bullet-list">{formatDescription(prev.description)}</ul>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="panel-empty">-</div>
-          )}
-        </div>
-
-        <div className={`compare-panel right ${change.change_type === 'DELETED' ? 'empty' : ''}`}>
-          {curr ? (
-            <>
-              {curr.item_type && prev && curr.item_type !== prev.item_type && (
-                <div className="panel-field changed"><span className="field-label">문항유형:</span> {curr.item_type}</div>
-              )}
-              {curr.score !== undefined && prev && curr.score !== prev.score && (
-                <div className="panel-field changed"><span className="field-label">배점:</span> {curr.score}점</div>
-              )}
-              {curr.question && (!prev || curr.question !== prev.question) && (
-                <div className="panel-question changed">{curr.question}</div>
-              )}
-              {curr.description && (!prev || curr.description !== prev.description) && (
-                <div className="panel-desc changed">
-                  <ul className="bullet-list">{formatDescription(curr.description)}</ul>
-                </div>
-              )}
-              {change.change_type === 'NEW' && (
-                <>
-                  {curr.item_type && <div className="panel-field"><span className="field-label">문항유형:</span> {curr.item_type}</div>}
-                  {curr.score !== undefined && <div className="panel-field"><span className="field-label">배점:</span> {curr.score}점</div>}
-                  {curr.question && <div className="panel-question">{curr.question}</div>}
-                  {curr.description && (
-                    <div className="panel-desc">
-                      <ul className="bullet-list">{formatDescription(curr.description)}</ul>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          ) : (
-            <div className="panel-empty">-</div>
-          )}
-        </div>
+      <div className="change-item-doc-body">
+        {changeLines.map((line, i) => (
+          <div key={i} className="change-line-doc">
+            <span className="tag-before-doc">|수정전|</span>
+            <span className="change-text-before">{line.before}</span>
+            <span className="arrow-doc">→</span>
+            <span className="tag-after-doc">|수정후|</span>
+            <span className="change-text-after">{line.after}</span>
+            {line.note && <span className="change-note">{line.note}</span>}
+          </div>
+        ))}
       </div>
 
-      <div className="compare-footer">
-        <span className="reason-label">수정사유:</span> {change.summary}
+      <div className="change-divider-doc">---</div>
+
+      <div className="change-reason-doc">
+        <span className="tag-reason">|수정사유: {change.summary}|</span>
       </div>
     </motion.div>
   );

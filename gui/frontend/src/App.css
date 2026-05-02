@@ -1063,3 +1063,101 @@
   font-weight: 600;
   color: #64748b;
 }
+
+/* Document-style comparison UI */
+.change-item-doc {
+  background: #1e293b;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+.change-item-doc-header {
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+  font-size: 1rem;
+}
+
+.change-item-doc-header strong {
+  color: #f1f5f9;
+}
+
+.change-item-doc-body {
+  padding: 1rem;
+}
+
+.change-line-doc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.tag-before-doc {
+  background: #dc2626;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag-after-doc {
+  background: #16a34a;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.change-text-before {
+  color: #fca5a5;
+  flex: 1;
+  min-width: 100px;
+}
+
+.change-text-after {
+  color: #86efac;
+  flex: 1;
+  min-width: 100px;
+}
+
+.arrow-doc {
+  color: #64748b;
+  font-weight: bold;
+  padding: 0 0.25rem;
+}
+
+.change-note {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-style: italic;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.change-divider-doc {
+  text-align: center;
+  color: #475569;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.5em;
+}
+
+.change-reason-doc {
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  border-top: 1px solid #334155;
+}
+
+.tag-reason {
+  color: #fbbf24;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
