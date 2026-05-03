@@ -73,6 +73,14 @@ if (require.main === module) {
   - `styles/legacy/README.md`
 - **번들 크기**: 19.64 kB → 11.09 kB (43% 감소)
 
+### SPEC-DESIGN-TOKEN-001 ✅
+
+- **커밋**: `3c4e102 refactor(frontend): 인라인 hex 색상 → CSS 변수 토큰화`
+- **변경**:
+  - `tokens.css` — 3개 토큰 추가 (accent-primary-dark, accent-danger-dark, accent-danger-bg)
+  - 7개 CSS 파일에서 ~90개 인라인 hex → var(--*) 변환
+- **효과**: tokens.css가 유일한 색상 정의 소스, 테마 변경 용이
+
 ---
 
 ## 📋 후속 SPEC 후보 (ICE 순위)
@@ -84,11 +92,11 @@ if (require.main === module) {
 | ~~3~~ | ~~SPEC-AUTH-001~~ | ~~PATCH 인증 추가~~ | - | ✅ 완료 |
 | ~~4~~ | ~~SPEC-CONTEXT-001~~ | ~~Sidebar 26-prop drilling → React Context~~ | - | ✅ 완료 |
 | ~~5~~ | ~~SPEC-DEAD-CSS-001~~ | ~~legacy comparison CSS 693줄 제거~~ | - | ✅ 완료 |
-| 1 | **SPEC-DESIGN-TOKEN-001** | 인라인 hex 색상 → `var(--accent-primary)` 등 토큰화. tokens.css는 이미 정의됨, migration만 필요 | 없음 | MEDIUM |
-| 2 | **SPEC-DATA-CLEANUP-001** | `pdf/` ETL v1~v4 누적 정리. `migrate_v2.py`, `verification_reports_v3.json` 등 | 없음 | SMALL |
-| 3 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
+| ~~6~~ | ~~SPEC-DESIGN-TOKEN-001~~ | ~~인라인 hex → CSS 변수 토큰화~~ | - | ✅ 완료 |
+| 1 | **SPEC-DATA-CLEANUP-001** | `pdf/` ETL v1~v4 누적 정리. `migrate_v2.py`, `verification_reports_v3.json` 등 | 없음 | SMALL |
+| 2 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
 
-추천 다음 단계: **SPEC-DESIGN-TOKEN-001** (MEDIUM, 코드 품질) 또는 **SPEC-DATA-CLEANUP-001** (SMALL, 빠른 정리)
+추천 다음 단계: **SPEC-DATA-CLEANUP-001** (SMALL, 빠른 정리) 또는 **SPEC-PDF-EMBEDDED-REPO-001** (TINY, 조사)
 
 ---
 
@@ -125,9 +133,9 @@ GitHub `whopark/LMF` 페이지가 비어 보인다. `.autopus/project/product.md
 cd gui/backend && npm run test:run
 
 # 2. 다음 SPEC 시작 (권장)
-/auto plan "SPEC-DESIGN-TOKEN-001: CSS 토큰화"
-# 또는
 /auto plan "SPEC-DATA-CLEANUP-001: ETL 파일 정리"
+# 또는
+/auto plan "SPEC-PDF-EMBEDDED-REPO-001: 임베디드 .git 조사"
 ```
 
 ---
@@ -144,7 +152,7 @@ cd gui/backend && npm run test:run
   - 5개 dead code/orphan 정리
 
 ### 2026-05-04 세션
-- **commits**: 9개 (master에 총 24개)
+- **commits**: 11개 (master에 총 26개)
 - **주요 산출물**:
   - 검증 부채 해소 (MongoDB 재import + require 가드)
   - SPEC-TEST-INTRO-001 완료 (Vitest + supertest + 7개 테스트)
@@ -152,6 +160,7 @@ cd gui/backend && npm run test:run
   - SPEC-AUTH-001 완료 (API Key 인증 + 7개 테스트)
   - SPEC-CONTEXT-001 완료 (Sidebar 26-prop → React Context)
   - SPEC-DEAD-CSS-001 완료 (legacy CSS 693줄 제거, 번들 43% 감소)
+  - SPEC-DESIGN-TOKEN-001 완료 (인라인 hex → CSS 변수 토큰화)
 
 ---
 
