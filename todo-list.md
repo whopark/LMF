@@ -81,6 +81,18 @@ if (require.main === module) {
   - 7개 CSS 파일에서 ~90개 인라인 hex → var(--*) 변환
 - **효과**: tokens.css가 유일한 색상 정의 소스, 테마 변경 용이
 
+### SPEC-DATA-CLEANUP-001 ✅
+
+- **커밋**: `706b800 chore(pdf): ETL v1~v3 레거시 파일 10개 정리`
+- **삭제**:
+  - `import_verification_reports.py` (v1)
+  - `import_verification_reports_v2.py`
+  - `import_verification_reports_v3.py`
+  - `migrate_final.py`, `migrate_v2.py`, `upload_clean.py`
+  - `verification_reports.json`, `verification_reports_improved.json`, `verification_reports_v3.json`
+- **유지**: `import_verification_reports_v4.py`, `verification_reports_v4.json` (현재 버전)
+- **효과**: 5260줄 레거시 코드 제거, structure.md 업데이트
+
 ---
 
 ## 📋 후속 SPEC 후보 (ICE 순위)
@@ -93,10 +105,10 @@ if (require.main === module) {
 | ~~4~~ | ~~SPEC-CONTEXT-001~~ | ~~Sidebar 26-prop drilling → React Context~~ | - | ✅ 완료 |
 | ~~5~~ | ~~SPEC-DEAD-CSS-001~~ | ~~legacy comparison CSS 693줄 제거~~ | - | ✅ 완료 |
 | ~~6~~ | ~~SPEC-DESIGN-TOKEN-001~~ | ~~인라인 hex → CSS 변수 토큰화~~ | - | ✅ 완료 |
-| 1 | **SPEC-DATA-CLEANUP-001** | `pdf/` ETL v1~v4 누적 정리. `migrate_v2.py`, `verification_reports_v3.json` 등 | 없음 | SMALL |
-| 2 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
+| ~~7~~ | ~~SPEC-DATA-CLEANUP-001~~ | ~~pdf/ ETL v1~v3 파일 정리~~ | - | ✅ 완료 |
+| 1 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
 
-추천 다음 단계: **SPEC-DATA-CLEANUP-001** (SMALL, 빠른 정리) 또는 **SPEC-PDF-EMBEDDED-REPO-001** (TINY, 조사)
+추천 다음 단계: **SPEC-PDF-EMBEDDED-REPO-001** (TINY, 조사)
 
 ---
 
@@ -133,8 +145,6 @@ GitHub `whopark/LMF` 페이지가 비어 보인다. `.autopus/project/product.md
 cd gui/backend && npm run test:run
 
 # 2. 다음 SPEC 시작 (권장)
-/auto plan "SPEC-DATA-CLEANUP-001: ETL 파일 정리"
-# 또는
 /auto plan "SPEC-PDF-EMBEDDED-REPO-001: 임베디드 .git 조사"
 ```
 
@@ -152,7 +162,7 @@ cd gui/backend && npm run test:run
   - 5개 dead code/orphan 정리
 
 ### 2026-05-04 세션
-- **commits**: 11개 (master에 총 26개)
+- **commits**: 12개 (master에 총 27개)
 - **주요 산출물**:
   - 검증 부채 해소 (MongoDB 재import + require 가드)
   - SPEC-TEST-INTRO-001 완료 (Vitest + supertest + 7개 테스트)
@@ -161,6 +171,7 @@ cd gui/backend && npm run test:run
   - SPEC-CONTEXT-001 완료 (Sidebar 26-prop → React Context)
   - SPEC-DEAD-CSS-001 완료 (legacy CSS 693줄 제거, 번들 43% 감소)
   - SPEC-DESIGN-TOKEN-001 완료 (인라인 hex → CSS 변수 토큰화)
+  - SPEC-DATA-CLEANUP-001 완료 (ETL v1~v3 파일 5260줄 정리)
 
 ---
 
