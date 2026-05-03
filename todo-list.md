@@ -54,6 +54,15 @@ if (require.main === module) {
 - **사용법**: `x-api-key` 헤더에 `API_KEY` 환경변수 값 전달
 - **테스트 현황**: 14개 (기존 7 + 인증 7)
 
+### SPEC-CONTEXT-001 ✅
+
+- **커밋**: `1528b51 refactor(frontend): Sidebar 26-prop drilling → React Context API`
+- **산출물**:
+  - `contexts/FilterContext.jsx` (99줄) — 중앙 상태 관리
+  - `App.jsx` (211줄 → 161줄) — FilterProvider 적용
+  - `Sidebar.jsx` (300줄 → 253줄) — props 26개 → 0개
+- **Before/After**: Sidebar 26-prop drilling → useFilterContext() 직접 접근
+
 ---
 
 ## 📋 후속 SPEC 후보 (ICE 순위)
@@ -63,13 +72,13 @@ if (require.main === module) {
 | ~~1~~ | ~~SPEC-TEST-INTRO-001~~ | ~~Vitest + supertest 도입~~ | - | ✅ 완료 |
 | ~~2~~ | ~~SPEC-ROUTES-SPLIT-001~~ | ~~api.js 분할~~ | - | ✅ 완료 |
 | ~~3~~ | ~~SPEC-AUTH-001~~ | ~~PATCH 인증 추가~~ | - | ✅ 완료 |
-| 1 | **SPEC-CONTEXT-001** | Sidebar 28-prop drilling → React Context API. useFilters 추출(157247a)의 자연스러운 다음 단계 | 없음 | MEDIUM |
-| 2 | **SPEC-DEAD-CSS-001** | `gui/frontend/src/styles/legacy/comparison-*.css` 약 700줄 실제 제거. 격리는 SPEC-CLEANUP-001 P2에서 완료 | 없음 | SMALL |
-| 3 | **SPEC-DESIGN-TOKEN-001** | 인라인 hex 색상 → `var(--accent-primary)` 등 토큰화. tokens.css는 이미 정의됨, migration만 필요 | 없음 | MEDIUM |
-| 4 | **SPEC-DATA-CLEANUP-001** | `pdf/` ETL v1~v4 누적 정리. `migrate_v2.py`, `verification_reports_v3.json` 등 | 없음 | SMALL |
-| 5 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
+| ~~4~~ | ~~SPEC-CONTEXT-001~~ | ~~Sidebar 26-prop drilling → React Context~~ | - | ✅ 완료 |
+| 1 | **SPEC-DEAD-CSS-001** | `gui/frontend/src/styles/legacy/comparison-*.css` 약 700줄 실제 제거. 격리는 SPEC-CLEANUP-001 P2에서 완료 | 없음 | SMALL |
+| 2 | **SPEC-DESIGN-TOKEN-001** | 인라인 hex 색상 → `var(--accent-primary)` 등 토큰화. tokens.css는 이미 정의됨, migration만 필요 | 없음 | MEDIUM |
+| 3 | **SPEC-DATA-CLEANUP-001** | `pdf/` ETL v1~v4 누적 정리. `migrate_v2.py`, `verification_reports_v3.json` 등 | 없음 | SMALL |
+| 4 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
 
-추천 다음 단계: **SPEC-CONTEXT-001** 또는 **SPEC-DEAD-CSS-001**
+추천 다음 단계: **SPEC-DEAD-CSS-001** (SMALL, 빠른 정리) 또는 **SPEC-DESIGN-TOKEN-001** (MEDIUM, 코드 품질)
 
 ---
 
@@ -106,9 +115,9 @@ GitHub `whopark/LMF` 페이지가 비어 보인다. `.autopus/project/product.md
 cd gui/backend && npm run test:run
 
 # 2. 다음 SPEC 시작 (권장)
-/auto plan "SPEC-CONTEXT-001: React Context 도입"
-# 또는
 /auto plan "SPEC-DEAD-CSS-001: legacy CSS 제거"
+# 또는
+/auto plan "SPEC-DESIGN-TOKEN-001: CSS 토큰화"
 ```
 
 ---
@@ -125,12 +134,13 @@ cd gui/backend && npm run test:run
   - 5개 dead code/orphan 정리
 
 ### 2026-05-04 세션
-- **commits**: 6개 (master에 총 21개)
+- **commits**: 7개 (master에 총 22개)
 - **주요 산출물**:
   - 검증 부채 해소 (MongoDB 재import + require 가드)
   - SPEC-TEST-INTRO-001 완료 (Vitest + supertest + 7개 테스트)
   - SPEC-ROUTES-SPLIT-001 완료 (api.js 277줄 → 4파일 분할)
   - SPEC-AUTH-001 완료 (API Key 인증 + 7개 테스트)
+  - SPEC-CONTEXT-001 완료 (Sidebar 26-prop → React Context)
 
 ---
 
