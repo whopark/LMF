@@ -19,7 +19,7 @@
   top: 40px;
   bottom: -40px;
   width: 1px;
-  background: #334155;
+  background: var(--border-subtle);
 }
 
 .history-entry:last-child::before {
@@ -29,16 +29,16 @@
 .history-year {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--text-quiet);
   min-width: 80px;
   padding-top: 0.5rem;
 }
 
 .history-card {
   flex: 1;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 0.5rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 1.5rem;
   cursor: pointer;
   transition: transform 0.2s;
@@ -46,7 +46,7 @@
 
 .history-card:hover {
   transform: translateX(10px);
-  border-color: #38bdf8;
+  border-color: var(--accent-primary);
 }
 
 .history-card-header {
@@ -54,13 +54,13 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  color: #f8fafc;
+  color: var(--text-primary);
 }
 
 .history-card-body {
   font-size: 0.95rem;
-  color: #cbd5e1;
-  background: #0f172a;
+  color: var(--text-muted);
+  background: var(--surface-base);
   padding: 1.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }

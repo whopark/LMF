@@ -15,11 +15,11 @@
 }
 
 .modal-content {
-  background: #1e293b;
+  background: var(--surface-1);
   width: 95%;
   max-width: 1100px;
   max-height: 90vh;
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -27,7 +27,7 @@
 
 .modal-actions-header {
   padding: 1rem 1.5rem;
-  background: #0f172a;
+  background: var(--surface-base);
   display: flex;
   justify-content: space-between;
 }
@@ -41,15 +41,15 @@
   margin-top: 1.5rem;
   display: flex;
   gap: 2rem;
-  color: #64748b;
+  color: var(--text-faint);
   font-size: 0.8rem;
 }
 
 /* Review table embedded in modal (and reused as history-card container) */
 .review-table-container {
   width: 100%;
-  border: 1px solid #334155;
-  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
 }
 
 .review-table {
@@ -59,23 +59,23 @@
 
 .review-table th,
 .review-table td {
-  border: 1px solid #334155;
+  border: 1px solid var(--border-subtle);
   padding: 1rem;
 }
 
 .label-cell {
-  background-color: #0f172a;
+  background-color: var(--surface-base);
   width: 80px;
   text-align: center;
   font-weight: 700;
 }
 
 .item-content-cell {
-  background-color: #1e293b;
+  background-color: var(--surface-1);
 }
 
 .option-cell {
-  background-color: #0f172a;
+  background-color: var(--surface-base);
   width: 60px;
   text-align: center;
   font-size: 0.85rem;
@@ -90,5 +90,5 @@
 
 .description-text {
   font-size: 0.9375rem;
-  color: #cbd5e1;
+  color: var(--text-muted);
 }

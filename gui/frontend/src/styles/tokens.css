@@ -23,9 +23,12 @@
   /* Accent palette */
   --accent-primary: #38bdf8;
   --accent-primary-soft: #60a5fa;
+  --accent-primary-dark: #0369a1;
   --accent-warn: #fbbf24;
   --accent-danger: #ef4444;
   --accent-danger-soft: #f87171;
+  --accent-danger-dark: #991b1b;
+  --accent-danger-bg: #fef2f2;
   --accent-success: #22c55e;
 
   /* Type tag colors */

@@ -5,10 +5,10 @@
 .select-input {
   width: 100%;
   padding: 0.625rem;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 0.5rem;
-  color: #f1f5f9;
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   outline: none;
   transition: all 0.2s;
@@ -19,24 +19,24 @@
 }
 
 select.select-input option {
-  background: #0f172a;
-  color: #f1f5f9;
+  background: var(--surface-base);
+  color: var(--text-secondary);
   padding: 0.5rem;
 }
 
 .select-input:focus {
-  border-color: #38bdf8;
+  border-color: var(--accent-primary);
 }
 
 .select-input:hover:not(:disabled) {
-  border-color: #475569;
+  border-color: var(--border-strong);
 }
 
 /* Item number scroll list (sidebar -> history track) */
 .item-number-list {
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 0.5rem;
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   max-height: 400px;
   overflow-y: auto;
 }
@@ -44,29 +44,29 @@ select.select-input option {
 .item-number-option {
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #cbd5e1;
+  color: var(--text-muted);
   cursor: pointer;
-  border-bottom: 1px solid #1e293b;
+  border-bottom: 1px solid var(--surface-1);
   transition: all 0.2s;
 }
 
 .item-number-option:hover {
-  background: #1e293b;
-  color: #38bdf8;
+  background: var(--surface-1);
+  color: var(--accent-primary);
 }
 
 .item-number-option.selected {
   background: rgba(56, 189, 248, 0.1);
-  color: #38bdf8;
+  color: var(--accent-primary);
   font-weight: 600;
 }
 
 /* Badge: core / item type chip */
 .badge-core {
-  background-color: #991b1b;
-  color: #fef2f2;
+  background-color: var(--accent-danger-dark);
+  color: var(--accent-danger-bg);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-weight: 700;
   margin-right: 8px;
   font-size: 0.75rem;
@@ -82,63 +82,63 @@ select.select-input option {
 
 .type-core {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--tag-core);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .type-basic {
   background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
+  color: var(--tag-basic);
   border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .type-required {
   background: rgba(234, 179, 8, 0.1);
-  color: #eab308;
+  color: var(--tag-required);
   border: 1px solid rgba(234, 179, 8, 0.2);
 }
 
 /* Edit-mode form controls */
 .edit-input {
   padding: 0.375rem 0.5rem;
-  background: #0f172a;
-  border: 1px solid #38bdf8;
-  border-radius: 4px;
-  color: #f1f5f9;
+  background: var(--surface-base);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 .edit-textarea {
   width: 100%;
   padding: 0.75rem;
-  background: #0f172a;
-  border: 1px solid #38bdf8;
-  border-radius: 4px;
-  color: #f1f5f9;
+  background: var(--surface-base);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   min-height: 200px;
 }
 
 /* Action buttons */
 .btn-save {
-  background: #0369a1;
+  background: var(--accent-primary-dark);
   color: white;
   border: none;
   padding: 0.5rem 1.5rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
 .btn-cancel {
   background: transparent;
-  color: #94a3b8;
-  border: 1px solid #334155;
+  color: var(--text-quiet);
+  border: 1px solid var(--border-subtle);
   padding: 0.5rem 1.5rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
 .close-btn {
-  color: #94a3b8;
+  color: var(--text-quiet);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -161,23 +161,23 @@ select.select-input option {
   content: "•";
   position: absolute;
   left: 0;
-  color: #38bdf8;
+  color: var(--accent-primary);
 }
 
 /* Stats card (sidebar) */
 .stats-card {
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 0.5rem;
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   padding: 1rem;
   text-align: center;
   font-size: 0.875rem;
-  color: #94a3b8;
+  color: var(--text-quiet);
 }
 
 .stats-card span {
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--accent-primary);
 }

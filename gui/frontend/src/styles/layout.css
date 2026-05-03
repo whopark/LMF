@@ -6,8 +6,8 @@
   height: 100vh;
   width: 100%;
   overflow: hidden;
-  background: #0f172a;
-  color: #f8fafc;
+  background: var(--surface-base);
+  color: var(--text-primary);
 }
 
 /* Sidebar frame */
@@ -15,8 +15,8 @@
   width: 320px;
   max-width: 320px;
   height: 100%;
-  background: #1e293b;
-  border-right: 1px solid #334155;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
@@ -31,13 +31,13 @@
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: #38bdf8;
+  color: var(--accent-primary);
 }
 
 .mode-toggle .active-mode {
-  background: #38bdf8;
-  border-color: #38bdf8;
-  color: #0f172a;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--surface-base);
   font-weight: 700;
 }
 
@@ -55,7 +55,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #94a3b8;
+  color: var(--text-quiet);
   margin-bottom: 0.75rem;
   font-weight: 600;
   display: flex;
@@ -74,8 +74,8 @@
 .header {
   height: auto;
   min-height: 64px;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-subtle);
   padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
@@ -94,7 +94,7 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #64748b;
+  color: var(--text-faint);
   width: 18px;
   height: 18px;
 }
@@ -102,10 +102,10 @@
 .search-input {
   width: 100%;
   padding: 0.625rem 1rem 0.625rem 2.5rem;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 0.5rem;
-  color: #f1f5f9;
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   outline: none;
 }
@@ -135,6 +135,6 @@
 .placeholder-text {
   text-align: center;
   padding: 5rem;
-  color: #64748b;
+  color: var(--text-faint);
   font-size: 1.1rem;
 }
