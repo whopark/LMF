@@ -46,21 +46,21 @@
 
 | Rule | Status | 근거 |
 |---|---|---|
-| file-size-limit (300줄 하드 한계) | **PASS** | 최대 `legacy/comparison-doc.css` 278줄, `server.js` 46줄, `routes/api.js` 277줄 |
-| TDD enforce | **DEFERRED** | `autopus.yaml: methodology.enforce: false`. 테스트 0개 상태에서 첫 통과 테스트 도입까지 완화 (SPEC-CLEANUP-001 P5 결정) |
+| file-size-limit (300줄 하드 한계) | **PASS** | 최대 `views/compare-sbs.css` 275줄 (legacy CSS 삭제됨) |
+| TDD enforce | **PASS** | `autopus.yaml: methodology.enforce: true`. Vitest + supertest 14개 테스트 도입 완료 (SPEC-TEST-INTRO-001) |
 | doc-storage | **PASS** | SPEC-CLEANUP-001은 backend+frontend+config 변경이라 root `.autopus/specs/` 사용 |
 | language-policy | **PASS** | 코드 주석 en, 커밋 ko, 응답 ko |
 | project-identity | **PASS** | 제품은 `gui/`이고 `.autopus/`는 ADK 하네스 메타 — 혼동하지 않음 |
 
 ## Known Tech Debt
 
-| 항목 | 영향 | 후속 SPEC 후보 |
+| 항목 | 영향 | 상태 |
 |---|---|---|
-| `gui/frontend/src/styles/legacy/` 약 1000줄 dead CSS | 빌드 산출물 비대 | SPEC-DEAD-CSS-001 |
-| `pdf/` ETL 버전 누적 (`migrate_v2.py`, `verification_reports_v1~4.json` 등) | 신규 작업 시 어떤 게 진실인지 혼란 | SPEC-DATA-CLEANUP-001 |
-| 인증/권한 부재 — PATCH `/api/items/:id` 무방비 | 의원 내부망 단일 사용자 환경에선 OK, 다중 사용자 시 위험 | SPEC-AUTH-001 |
-| 자동화 테스트 0개 | 회귀 검증 수동 의존 | SPEC-TEST-INTRO-001 |
-| 인라인 hex 색상 vs DESIGN.md 토큰 정책 | 디자인 시스템화 미완 | SPEC-DESIGN-TOKEN-001 |
+| ~~`gui/frontend/src/styles/legacy/` dead CSS~~ | ~~빌드 산출물 비대~~ | ✅ SPEC-DEAD-CSS-001 완료 |
+| ~~`pdf/` ETL 버전 누적~~ | ~~어떤 게 진실인지 혼란~~ | ✅ SPEC-DATA-CLEANUP-001 완료 |
+| ~~인증/권한 부재~~ | ~~PATCH 무방비~~ | ✅ SPEC-AUTH-001 완료 (API Key) |
+| ~~자동화 테스트 0개~~ | ~~회귀 검증 수동 의존~~ | ✅ SPEC-TEST-INTRO-001 완료 (14개) |
+| ~~인라인 hex 색상~~ | ~~디자인 시스템화 미완~~ | ✅ SPEC-DESIGN-TOKEN-001 완료 |
 
 ## Cross-References
 

@@ -38,10 +38,8 @@ spec:
         doc_context_max_lines: 200
 methodology:
     mode: tdd
-    # enforce: false until first test suite is in place. Set true once the
-    # project adopts Vitest/Jest+supertest and has at least one passing test.
-    # Tracked in SPEC-CLEANUP-001 acceptance #5.
-    enforce: false
+    # Restored 2026-05-04: Vitest + supertest 14 tests in place (SPEC-TEST-INTRO-001)
+    enforce: true
     review_gate: true
 router:
     strategy: balanced

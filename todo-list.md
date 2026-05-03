@@ -132,9 +132,9 @@ if (require.main === module) {
 
 SPEC-CLEANUP-001 Open Issue Q-COMP-04. 임의값으로 시작했음. 실제 사용 패턴 1주일 관찰 후 조정.
 
-### C. autopus.yaml `methodology.enforce: false` 복원 시점
+### ~~C. autopus.yaml `methodology.enforce: false` 복원 시점~~ ✅ 해결
 
-SPEC-CLEANUP-001 P5에서 일시 완화. 테스트 인프라 도입 완료(SPEC-TEST-INTRO-001)로 복원 조건 충족.
+`enforce: true`로 복원 완료. Vitest + supertest 14개 테스트 도입됨 (SPEC-TEST-INTRO-001).
 
 ### ~~D. README.md 부재~~ ✅ 해결
 
