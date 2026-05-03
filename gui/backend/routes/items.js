@@ -1,5 +1,6 @@
 const express = require('express');
 const ChecklistItem = require('../models/ChecklistItem');
+const { requireApiKey } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -68,8 +69,8 @@ router.get('/:number', async (req, res) => {
   }
 });
 
-// Update item by ID
-router.patch('/:id', async (req, res) => {
+// Update item by ID (requires API key)
+router.patch('/:id', requireApiKey, async (req, res) => {
   try {
     const { id } = req.params;
     const body = req.body || {};
