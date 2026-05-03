@@ -1,6 +1,6 @@
 /* App.css — style import index.
    Per file-size-limit rule, individual rules live in ./styles/.
-   Order matters: tokens -> layout/components -> views -> legacy. */
+   Order matters: tokens -> layout/components -> views. */
 
 @import "./styles/tokens.css";
 @import "./styles/layout.css";
@@ -9,10 +9,3 @@
 @import "./styles/views/modal.css";
 @import "./styles/views/history.css";
 @import "./styles/views/compare-sbs.css";
-
-/* Legacy styles — currently unreferenced by any JSX (verified 2026-05-03).
-   See styles/legacy/README.md before deleting. Kept loaded so any stray
-   className survives a regression rather than failing visually. */
-@import "./styles/legacy/comparison-card.css";
-@import "./styles/legacy/comparison-doc.css";
-@import "./styles/legacy/comparison-panels.css";
