@@ -50,6 +50,8 @@ nul
 .opencode/
 .agents/skills/
 .agents/plugins/
-.autopus/
+.autopus/cache/
 .autopus/design/imports/
+# Note: .autopus/specs/, .autopus/brainstorms/, .autopus/project/ are user-authored
+# documents (per .claude/rules/autopus/doc-storage.md) and SHOULD be tracked.
 .mcp.json
