@@ -93,6 +93,16 @@ if (require.main === module) {
 - **유지**: `import_verification_reports_v4.py`, `verification_reports_v4.json` (현재 버전)
 - **효과**: 5260줄 레거시 코드 제거, structure.md 업데이트
 
+### SPEC-PDF-EMBEDDED-REPO-001 ✅
+
+- **조사 결과**: 14개가 아닌 1개 `.git`만 발견 (`pdf/01 검사실운영/.git`)
+- **정체**: 다른 프로젝트(Docker/PostgreSQL/FastAPI)의 복사 잔재
+  - COMMIT_EDITMSG: "fix: Docker 배포 시 발견된 SQL 뷰, CSP, 라우터 버그 수정"
+  - Co-Authored-By: Claude Opus 4.6
+  - 리모트 없음, 로컬 전용
+- **조치**: `rm -rf "pdf/01 검사실운영/.git"` 삭제 완료
+- **커밋**: 없음 (`pdf/*/`는 gitignored)
+
 ---
 
 ## 📋 후속 SPEC 후보 (ICE 순위)
@@ -106,17 +116,17 @@ if (require.main === module) {
 | ~~5~~ | ~~SPEC-DEAD-CSS-001~~ | ~~legacy comparison CSS 693줄 제거~~ | - | ✅ 완료 |
 | ~~6~~ | ~~SPEC-DESIGN-TOKEN-001~~ | ~~인라인 hex → CSS 변수 토큰화~~ | - | ✅ 완료 |
 | ~~7~~ | ~~SPEC-DATA-CLEANUP-001~~ | ~~pdf/ ETL v1~v3 파일 정리~~ | - | ✅ 완료 |
-| 1 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
+| ~~8~~ | ~~SPEC-PDF-EMBEDDED-REPO-001~~ | ~~pdf/01 임베디드 .git 조사 + 정리~~ | - | ✅ 완료 |
 
-추천 다음 단계: **SPEC-PDF-EMBEDDED-REPO-001** (TINY, 조사)
+**모든 후속 SPEC 완료!** 새로운 기능 개발 또는 추가 리팩토링이 필요하면 알려주세요.
 
 ---
 
 ## 🔍 조사 필요한 발견들
 
-### A. `pdf/01 검사실운영` ~ `pdf/90 분자진단검사` — 14개 임베디드 git repo
+### ~~A. `pdf/01 검사실운영` 임베디드 git repo~~ ✅ 해결
 
-각 분류 디렉토리가 자체 `.git`을 가지고 있다. 의도된 것인지, 누군가의 init 사고인지, 외부 clone 잔재인지 미상. `pdf/*/`로 gitignored 되어 push에는 영향 없지만 로컬 정리 필요.
+~~조사 결과 14개가 아닌 1개만 존재.~~ 다른 프로젝트(Docker/PostgreSQL/FastAPI) 복사 잔재로 확인, 삭제 완료.
 
 ### B. LLM rate limit 값 (분당 20회) 적정성
 
@@ -144,8 +154,8 @@ GitHub `whopark/LMF` 페이지가 비어 보인다. `.autopus/project/product.md
 # 1. 테스트 확인
 cd gui/backend && npm run test:run
 
-# 2. 다음 SPEC 시작 (권장)
-/auto plan "SPEC-PDF-EMBEDDED-REPO-001: 임베디드 .git 조사"
+# 2. 새 기능 또는 리팩토링 요청
+# 모든 후속 SPEC이 완료되었습니다. 새로운 작업을 요청하세요.
 ```
 
 ---
@@ -172,6 +182,7 @@ cd gui/backend && npm run test:run
   - SPEC-DEAD-CSS-001 완료 (legacy CSS 693줄 제거, 번들 43% 감소)
   - SPEC-DESIGN-TOKEN-001 완료 (인라인 hex → CSS 변수 토큰화)
   - SPEC-DATA-CLEANUP-001 완료 (ETL v1~v3 파일 5260줄 정리)
+  - SPEC-PDF-EMBEDDED-REPO-001 완료 (로컬 .git 1개 정리)
 
 ---
 
