@@ -1,0 +1,66 @@
+/* HistoryView (TrackView): year-by-year timeline of a single item. */
+
+.history-timeline {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.history-entry {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.history-entry::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 40px;
+  bottom: -40px;
+  width: 1px;
+  background: #334155;
+}
+
+.history-entry:last-child::before {
+  display: none;
+}
+
+.history-year {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #94a3b8;
+  min-width: 80px;
+  padding-top: 0.5rem;
+}
+
+.history-card {
+  flex: 1;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.history-card:hover {
+  transform: translateX(10px);
+  border-color: #38bdf8;
+}
+
+.history-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  color: #f8fafc;
+}
+
+.history-card-body {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  background: #0f172a;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}

@@ -1,0 +1,45 @@
+/* Semantic design tokens.
+   Source of truth for palette, typography, spacing, and radii.
+   Existing component rules still use hex values inline; future work should
+   migrate them to var(--*) references per DESIGN.md guidance. */
+
+:root {
+  /* Surface palette (slate scale, dark theme) */
+  --surface-base: #0f172a;
+  --surface-1: #1e293b;
+  --surface-2: #1a1a2e;
+  --surface-3: #162032;
+  --border-subtle: #334155;
+  --border-strong: #475569;
+
+  /* Text palette */
+  --text-primary: #f8fafc;
+  --text-secondary: #f1f5f9;
+  --text-muted: #cbd5e1;
+  --text-quiet: #94a3b8;
+  --text-faint: #64748b;
+  --text-disabled: #475569;
+
+  /* Accent palette */
+  --accent-primary: #38bdf8;
+  --accent-primary-soft: #60a5fa;
+  --accent-warn: #fbbf24;
+  --accent-danger: #ef4444;
+  --accent-danger-soft: #f87171;
+  --accent-success: #22c55e;
+
+  /* Type tag colors */
+  --tag-core: #ef4444;
+  --tag-basic: #22c55e;
+  --tag-required: #eab308;
+
+  /* Radii */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* Typography */
+  --font-base: "Pretendard", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
