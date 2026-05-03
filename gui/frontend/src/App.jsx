@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -7,6 +7,7 @@ import DashboardView from './components/DashboardView';
 import HistoryView from './components/HistoryView';
 import ItemModal from './components/ItemModal';
 import { API_BASE } from './utils/helpers.jsx';
+import { useFilters } from './hooks/useFilters';
 
 function App() {
   const [viewMode, setViewMode] = useState('dashboard');
@@ -14,7 +15,7 @@ function App() {
 
   // Dashboard State
   const [items, setItems] = useState([]);
-  const [filters, setFilters] = useState({ years: [], areas: [], subCategories: [] });
+  const { filters } = useFilters();
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
   const [selectedSubCat, setSelectedSubCat] = useState('');
@@ -36,25 +37,21 @@ function App() {
   const [compareArea, setCompareArea] = useState('');
   const [changesData, setChangesData] = useState(null);
 
-  // Load filter options
+  // One-shot initialization: pick first year/area when filter options first arrive.
+  // Guarded by a ref so user-driven resets (e.g. "필터 초기화") aren't overwritten.
+  const filtersInitialized = useRef(false);
   useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const res = await axios.get(`${API_BASE}/filters`);
-        setFilters(res.data);
-        if (res.data.years && res.data.years.length > 0) {
-          const sortedYears = [...res.data.years].sort((a, b) => b - a);
-          setSelectedYear(sortedYears[0].toString());
-        }
-        if (res.data.areas && res.data.areas.length > 0) {
-          setSelectedArea(res.data.areas[0]);
-        }
-      } catch (err) {
-        console.error('Failed to fetch filters:', err);
-      }
-    };
-    fetchFilters();
-  }, []);
+    if (filtersInitialized.current) return;
+    if (filters.years.length === 0 && filters.areas.length === 0) return;
+    filtersInitialized.current = true;
+    if (filters.years.length > 0) {
+      const sortedYears = [...filters.years].sort((a, b) => b - a);
+      setSelectedYear(sortedYears[0].toString());
+    }
+    if (filters.areas.length > 0) {
+      setSelectedArea(filters.areas[0]);
+    }
+  }, [filters]);
 
   // Fetch Dashboard Items
   const fetchItems = useCallback(async () => {
