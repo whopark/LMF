@@ -1,43 +1,14 @@
 import React from 'react';
 import { HelpCircle, LayoutTemplate, History, Calendar, Map, Tag, ChevronRight, GitCompare } from 'lucide-react';
+import { useFilterContext } from '../contexts/FilterContext';
 
-function Sidebar({
-  viewMode,
-  setViewMode,
-  historySubMode,
-  setHistorySubMode,
-  filters,
-  selectedYear,
-  setSelectedYear,
-  selectedArea,
-  setSelectedArea,
-  selectedSubCat,
-  setSelectedSubCat,
-  historyArea,
-  setHistoryArea,
-  itemNumbers,
-  selectedHistoryNumber,
-  setSelectedHistoryNumber,
-  compareYear,
-  setCompareYear,
-  compareArea,
-  setCompareArea,
-  changesData,
-  totalCount,
-  setPage,
-  setSearchTerm,
-  setHistoryItems
-}) {
-  const handleReset = () => {
-    setSelectedArea('');
-    setSelectedYear('');
-    setSelectedSubCat('');
-    setSearchTerm('');
-    setPage(1);
-    setHistoryArea('');
-    setSelectedHistoryNumber('');
-    setHistoryItems([]);
-  };
+function Sidebar() {
+  const {
+    viewMode,
+    setViewMode,
+    totalCount,
+    resetFilters,
+  } = useFilterContext();
 
   return (
     <aside className="sidebar">
@@ -65,32 +36,9 @@ function Sidebar({
 
       <div className="filter-section">
         {viewMode === 'dashboard' ? (
-          <DashboardFilters
-            filters={filters}
-            selectedArea={selectedArea}
-            setSelectedArea={setSelectedArea}
-            selectedYear={selectedYear}
-            setSelectedYear={setSelectedYear}
-            selectedSubCat={selectedSubCat}
-            setSelectedSubCat={setSelectedSubCat}
-            setPage={setPage}
-          />
+          <DashboardFilters />
         ) : (
-          <HistoryFilters
-            historySubMode={historySubMode}
-            setHistorySubMode={setHistorySubMode}
-            filters={filters}
-            compareYear={compareYear}
-            setCompareYear={setCompareYear}
-            compareArea={compareArea}
-            setCompareArea={setCompareArea}
-            changesData={changesData}
-            historyArea={historyArea}
-            setHistoryArea={setHistoryArea}
-            itemNumbers={itemNumbers}
-            selectedHistoryNumber={selectedHistoryNumber}
-            setSelectedHistoryNumber={setSelectedHistoryNumber}
-          />
+          <HistoryFilters />
         )}
       </div>
 
@@ -104,7 +52,7 @@ function Sidebar({
       <button
         className="select-input"
         style={{ marginTop: '1rem', color: '#94a3b8', borderStyle: 'dashed' }}
-        onClick={handleReset}
+        onClick={resetFilters}
       >
         필터 초기화
       </button>
@@ -112,7 +60,18 @@ function Sidebar({
   );
 }
 
-function DashboardFilters({ filters, selectedArea, setSelectedArea, selectedYear, setSelectedYear, selectedSubCat, setSelectedSubCat, setPage }) {
+function DashboardFilters() {
+  const {
+    filters,
+    selectedArea,
+    setSelectedArea,
+    selectedYear,
+    setSelectedYear,
+    selectedSubCat,
+    setSelectedSubCat,
+    setPage,
+  } = useFilterContext();
+
   return (
     <>
       <div className="filter-group">
@@ -154,21 +113,12 @@ function DashboardFilters({ filters, selectedArea, setSelectedArea, selectedYear
   );
 }
 
-function HistoryFilters({
-  historySubMode,
-  setHistorySubMode,
-  filters,
-  compareYear,
-  setCompareYear,
-  compareArea,
-  setCompareArea,
-  changesData,
-  historyArea,
-  setHistoryArea,
-  itemNumbers,
-  selectedHistoryNumber,
-  setSelectedHistoryNumber
-}) {
+function HistoryFilters() {
+  const {
+    historySubMode,
+    setHistorySubMode,
+  } = useFilterContext();
+
   return (
     <>
       <div className="filter-group" style={{ marginBottom: '1.5rem' }}>
@@ -191,29 +141,24 @@ function HistoryFilters({
       </div>
 
       {historySubMode === 'compare' ? (
-        <CompareFilters
-          filters={filters}
-          compareYear={compareYear}
-          setCompareYear={setCompareYear}
-          compareArea={compareArea}
-          setCompareArea={setCompareArea}
-          changesData={changesData}
-        />
+        <CompareFilters />
       ) : (
-        <TrackFilters
-          filters={filters}
-          historyArea={historyArea}
-          setHistoryArea={setHistoryArea}
-          itemNumbers={itemNumbers}
-          selectedHistoryNumber={selectedHistoryNumber}
-          setSelectedHistoryNumber={setSelectedHistoryNumber}
-        />
+        <TrackFilters />
       )}
     </>
   );
 }
 
-function CompareFilters({ filters, compareYear, setCompareYear, compareArea, setCompareArea, changesData }) {
+function CompareFilters() {
+  const {
+    filters,
+    compareYear,
+    setCompareYear,
+    compareArea,
+    setCompareArea,
+    changesData,
+  } = useFilterContext();
+
   return (
     <>
       <div className="filter-group">
@@ -257,7 +202,16 @@ function CompareFilters({ filters, compareYear, setCompareYear, compareArea, set
   );
 }
 
-function TrackFilters({ filters, historyArea, setHistoryArea, itemNumbers, selectedHistoryNumber, setSelectedHistoryNumber }) {
+function TrackFilters() {
+  const {
+    filters,
+    historyArea,
+    setHistoryArea,
+    itemNumbers,
+    selectedHistoryNumber,
+    setSelectedHistoryNumber,
+  } = useFilterContext();
+
   return (
     <>
       <div className="filter-group">

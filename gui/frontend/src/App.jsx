@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -7,51 +7,33 @@ import DashboardView from './components/DashboardView';
 import HistoryView from './components/HistoryView';
 import ItemModal from './components/ItemModal';
 import { API_BASE } from './utils/helpers.jsx';
-import { useFilters } from './hooks/useFilters';
+import { FilterProvider, useFilterContext } from './contexts/FilterContext';
 
-function App() {
-  const [viewMode, setViewMode] = useState('dashboard');
-  const [historySubMode, setHistorySubMode] = useState('compare');
+function AppContent() {
+  const {
+    viewMode,
+    historySubMode,
+    selectedYear,
+    selectedArea,
+    selectedSubCat,
+    searchTerm,
+    page,
+    setTotalCount,
+    historyArea,
+    setItemNumbers,
+    selectedHistoryNumber,
+    setHistoryItems,
+    historyItems,
+    compareYear,
+    compareArea,
+    setChangesData,
+    changesData,
+  } = useFilterContext();
 
-  // Dashboard State
   const [items, setItems] = useState([]);
-  const { filters } = useFilters();
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedArea, setSelectedArea] = useState('');
-  const [selectedSubCat, setSelectedSubCat] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-
-  // History State - Item Tracking
-  const [historyArea, setHistoryArea] = useState('');
-  const [itemNumbers, setItemNumbers] = useState([]);
-  const [selectedHistoryNumber, setSelectedHistoryNumber] = useState('');
-  const [historyItems, setHistoryItems] = useState([]);
-
-  // History State - Year Comparison
-  const [compareYear, setCompareYear] = useState('');
-  const [compareArea, setCompareArea] = useState('');
-  const [changesData, setChangesData] = useState(null);
-
-  // One-shot initialization: pick first year/area when filter options first arrive.
-  // Guarded by a ref so user-driven resets (e.g. "필터 초기화") aren't overwritten.
-  const filtersInitialized = useRef(false);
-  useEffect(() => {
-    if (filtersInitialized.current) return;
-    if (filters.years.length === 0 && filters.areas.length === 0) return;
-    filtersInitialized.current = true;
-    if (filters.years.length > 0) {
-      const sortedYears = [...filters.years].sort((a, b) => b - a);
-      setSelectedYear(sortedYears[0].toString());
-    }
-    if (filters.areas.length > 0) {
-      setSelectedArea(filters.areas[0]);
-    }
-  }, [filters]);
 
   // Fetch Dashboard Items
   const fetchItems = useCallback(async () => {
@@ -75,7 +57,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, viewMode]);
+  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, viewMode, setTotalCount]);
 
   useEffect(() => {
     fetchItems();
@@ -88,15 +70,13 @@ function App() {
         try {
           const res = await axios.get(`${API_BASE}/filters/item-numbers`, { params: { area: historyArea } });
           setItemNumbers(res.data);
-          setSelectedHistoryNumber('');
-          setHistoryItems([]);
         } catch (err) {
           console.error('Failed to fetch item numbers:', err);
         }
       };
       fetchItemNumbers();
     }
-  }, [historyArea, viewMode]);
+  }, [historyArea, viewMode, setItemNumbers]);
 
   // History Mode: Fetch all years for a selected Item Number
   useEffect(() => {
@@ -119,7 +99,7 @@ function App() {
       };
       fetchHistory();
     }
-  }, [selectedHistoryNumber, historyArea, viewMode, historySubMode]);
+  }, [selectedHistoryNumber, historyArea, viewMode, historySubMode, setHistoryItems]);
 
   // Year Comparison Mode: Fetch year-over-year changes
   useEffect(() => {
@@ -139,60 +119,23 @@ function App() {
       };
       fetchChanges();
     }
-  }, [compareYear, compareArea, viewMode, historySubMode]);
+  }, [compareYear, compareArea, viewMode, historySubMode, setChangesData]);
 
   return (
     <div className="app-container">
-      <Sidebar
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        historySubMode={historySubMode}
-        setHistorySubMode={setHistorySubMode}
-        filters={filters}
-        selectedYear={selectedYear}
-        setSelectedYear={setSelectedYear}
-        selectedArea={selectedArea}
-        setSelectedArea={setSelectedArea}
-        selectedSubCat={selectedSubCat}
-        setSelectedSubCat={setSelectedSubCat}
-        historyArea={historyArea}
-        setHistoryArea={setHistoryArea}
-        itemNumbers={itemNumbers}
-        selectedHistoryNumber={selectedHistoryNumber}
-        setSelectedHistoryNumber={setSelectedHistoryNumber}
-        compareYear={compareYear}
-        setCompareYear={setCompareYear}
-        compareArea={compareArea}
-        setCompareArea={setCompareArea}
-        changesData={changesData}
-        totalCount={totalCount}
-        setPage={setPage}
-        setSearchTerm={setSearchTerm}
-        setHistoryItems={setHistoryItems}
-      />
+      <Sidebar />
 
       <main className="main-content">
         {viewMode === 'dashboard' ? (
           <DashboardView
             items={items}
             loading={loading}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            page={page}
-            setPage={setPage}
             totalPages={totalPages}
             setSelectedItem={setSelectedItem}
           />
         ) : (
           <HistoryView
-            historySubMode={historySubMode}
             loading={loading}
-            changesData={changesData}
-            compareYear={compareYear}
-            compareArea={compareArea}
-            historyArea={historyArea}
-            selectedHistoryNumber={selectedHistoryNumber}
-            historyItems={historyItems}
             setSelectedItem={setSelectedItem}
           />
         )}
@@ -202,9 +145,16 @@ function App() {
         selectedItem={selectedItem}
         setSelectedItem={setSelectedItem}
         setItems={setItems}
-        setHistoryItems={setHistoryItems}
       />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <FilterProvider>
+      <AppContent />
+    </FilterProvider>
   );
 }
 
