@@ -35,29 +35,23 @@ e:/LMF_all/
 │           ├── hooks/useFilters.js   # ⚠️ unused (dead code)
 │           ├── utils/helpers.jsx     # getDisplayData, formatDescription, getTagClass
 │           └── styles/               # 분할 CSS (SPEC-CLEANUP-001 P2)
-│               ├── tokens.css        # palette CSS variables (45줄)
+│               ├── tokens.css        # palette CSS variables (30 vars)
 │               ├── layout.css        # app shell (140줄)
 │               ├── components.css    # reusable widgets (183줄)
-│               ├── views/
-│               │   ├── dashboard.css
-│               │   ├── modal.css
-│               │   ├── history.css
-│               │   └── compare-sbs.css
-│               └── legacy/           # ⚠️ dead CSS, JSX 미참조
-│                   ├── README.md     # 정리 가이드
-│                   ├── comparison-card.css
-│                   ├── comparison-doc.css
-│                   └── comparison-panels.css
+│               └── views/
+│                   ├── dashboard.css
+│                   ├── modal.css
+│                   ├── history.css
+│                   └── compare-sbs.css
 ├── pdf/                              # 데이터 + ETL
 │   ├── 01 검사실운영/ ~ 90 분자진단검사/   # 분류별 11개 디렉토리
 │   │   └── 2020.pdf ~ 2024.pdf       # 연도별 원본 PDF
 │   ├── checklist_items_final.json    # ⭐ MongoDB import 소스 (단일 진실)
 │   ├── classification_map.json
 │   ├── import_to_mongodb.py          # ⭐ 메인 import 스크립트
-│   ├── import_verification_reports*.py  # v1~v4 (정리 후보)
-│   ├── migrate_final.py, migrate_v2.py
-│   ├── dashboard.py, upload_clean.py
-│   ├── verification_reports_v1~v4.json  # 중간 산출물
+│   ├── import_verification_reports_v4.py  # ⭐ 현재 ETL (v4)
+│   ├── verification_reports_v4.json  # v4 중간 산출물
+│   ├── dashboard.py                  # Streamlit 대시보드
 │   ├── CLAUDE.md                     # 데이터 디렉토리 자체 컨텍스트
 │   └── PRD.md
 ├── mongodb_data/                     # 로컬 MongoDB 데이터 (gitignored)
@@ -85,10 +79,10 @@ e:/LMF_all/
 
 | 항목 | 값 |
 |---|---|
-| 최대 라인 수 (소스) | `routes/api.js` 277줄, `legacy/comparison-doc.css` 278줄 |
+| 최대 라인 수 (소스) | `views/compare-sbs.css` 275줄 |
 | 평균 컴포넌트 크기 | 약 130줄 |
 | 300줄 위반 | 0건 |
-| 200줄 초과 (분할 권장) | 4건 (api.js 277, comparison-doc 278, comparison-panels 277, compare-sbs 274) |
+| 200줄 초과 (분할 권장) | 1건 (compare-sbs.css 275줄) |
 
 ## 진입점 요약
 
@@ -103,5 +97,4 @@ e:/LMF_all/
 ## 주의 사항
 
 - `gui/frontend/src/hooks/useFilters.js`는 어떤 컴포넌트도 import 하지 않음 (dead code)
-- `pdf/`의 v1~v4 스크립트는 정리 대상 (별도 SPEC 권장)
 - `autopus-adk/`는 메타 repo가 추적하지 않음 (별도 `.git`)
