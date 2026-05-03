@@ -34,6 +34,16 @@ if (require.main === module) {
   - `tests/api.test.js` — 7개 API 테스트 (filters, items, items/:number)
 - **테스트 명령**: `cd gui/backend && npm run test:run`
 
+### SPEC-ROUTES-SPLIT-001 ✅
+
+- **커밋**: `0e28304 refactor(backend): routes/api.js 도메인별 분할`
+- **산출물**:
+  - `api.js` (12줄) — 라우터 통합 index
+  - `filters.js` (35줄) — 필터 옵션 조회
+  - `items.js` (112줄) — 체크리스트 CRUD
+  - `changes.js` (141줄) — 연도별 변경 비교
+- **Before/After**: 277줄 단일 파일 → 4개 파일 (최대 141줄)
+
 ---
 
 ## 📋 후속 SPEC 후보 (ICE 순위)
@@ -41,15 +51,15 @@ if (require.main === module) {
 | Rank | SPEC ID (가칭) | 설명 | 의존 | 예상 크기 |
 |---|---|---|---|---|
 | ~~1~~ | ~~SPEC-TEST-INTRO-001~~ | ~~Vitest + supertest 도입~~ | - | ✅ 완료 |
+| ~~2~~ | ~~SPEC-ROUTES-SPLIT-001~~ | ~~api.js 분할~~ | - | ✅ 완료 |
 | 1 | **SPEC-AUTH-001** | PATCH `/api/items/:id` 인증 추가. 다중 사용자 시 데이터 무결성 보호 | 없음 | MEDIUM |
 | 2 | **SPEC-CONTEXT-001** | Sidebar 28-prop drilling → React Context API. useFilters 추출(157247a)의 자연스러운 다음 단계 | 없음 | MEDIUM |
-| 3 | **SPEC-ROUTES-SPLIT-001** | `routes/api.js` (277줄, 26 분기점) → `filters.js`/`items.js`/`changes.js` 분할. /auto map 핫스팟 1위 | 없음 | SMALL |
-| 4 | **SPEC-DEAD-CSS-001** | `gui/frontend/src/styles/legacy/comparison-*.css` 약 700줄 실제 제거. 격리는 SPEC-CLEANUP-001 P2에서 완료 | 없음 | SMALL |
-| 5 | **SPEC-DESIGN-TOKEN-001** | 인라인 hex 색상 → `var(--accent-primary)` 등 토큰화. tokens.css는 이미 정의됨, migration만 필요 | 없음 | MEDIUM |
-| 6 | **SPEC-DATA-CLEANUP-001** | `pdf/` ETL v1~v4 누적 정리. `migrate_v2.py`, `verification_reports_v3.json` 등 | 없음 | SMALL |
-| 7 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
+| 3 | **SPEC-DEAD-CSS-001** | `gui/frontend/src/styles/legacy/comparison-*.css` 약 700줄 실제 제거. 격리는 SPEC-CLEANUP-001 P2에서 완료 | 없음 | SMALL |
+| 4 | **SPEC-DESIGN-TOKEN-001** | 인라인 hex 색상 → `var(--accent-primary)` 등 토큰화. tokens.css는 이미 정의됨, migration만 필요 | 없음 | MEDIUM |
+| 5 | **SPEC-DATA-CLEANUP-001** | `pdf/` ETL v1~v4 누적 정리. `migrate_v2.py`, `verification_reports_v3.json` 등 | 없음 | SMALL |
+| 6 | **SPEC-PDF-EMBEDDED-REPO-001** | `pdf/01~90` 14개 분류 디렉토리의 임베디드 `.git` 정체 조사 + 정리 | 없음 | TINY |
 
-추천 다음 단계: **SPEC-AUTH-001** 또는 **SPEC-ROUTES-SPLIT-001**
+추천 다음 단계: **SPEC-AUTH-001** 또는 **SPEC-CONTEXT-001**
 
 ---
 
@@ -71,11 +81,6 @@ done
 ### B. LLM rate limit 값 (분당 20회) 적정성
 
 SPEC-CLEANUP-001 Open Issue Q-COMP-04. 임의값으로 시작했음. 실제 사용 패턴 1주일 관찰 후 조정.
-
-```bash
-# 1주일 후 access log 분석 (현재는 console.error만 있어 부족)
-grep "rate limit" gui/backend/server.log 2>/dev/null  # 로그 도입 필요
-```
 
 → SPEC 후보: **SPEC-OBSERVABILITY-001** (구조화된 로깅 + 메트릭).
 
@@ -116,7 +121,7 @@ cd gui/backend && npm run test:run
 # 2. 다음 SPEC 시작 (권장)
 /auto plan "SPEC-AUTH-001: PATCH 인증 추가"
 # 또는
-/auto plan "SPEC-ROUTES-SPLIT-001: api.js 분할"
+/auto plan "SPEC-CONTEXT-001: React Context 도입"
 
 # 3. autopus.yaml methodology.enforce 복원
 # autopus.yaml에서 methodology.enforce: true로 변경
@@ -136,10 +141,11 @@ cd gui/backend && npm run test:run
   - 5개 dead code/orphan 정리
 
 ### 2026-05-04 세션
-- **commits**: 2개 (master에 총 17개)
+- **commits**: 4개 (master에 총 19개)
 - **주요 산출물**:
   - 검증 부채 해소 (MongoDB 재import + require 가드)
   - SPEC-TEST-INTRO-001 완료 (Vitest + supertest + 7개 테스트)
+  - SPEC-ROUTES-SPLIT-001 완료 (api.js 277줄 → 4파일 분할)
 
 ---
 
