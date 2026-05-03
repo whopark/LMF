@@ -41,11 +41,11 @@ nul
 
 # PDF source documents — copyright concerns (한국 임상병리학회 점검표).
 # Stored locally for reference but excluded from public/private git history.
-pdf/*.pdf
-pdf/**/*.pdf
+# pdf/01~90 subdirectories are themselves embedded git repos (one per
+# 분류) — exclude entirely; only top-level metadata/scripts are tracked.
+pdf/*/
+pdf/.claude/
 pdf/__pycache__/
-pdf/dashboard_output/
-pdf/web_dashboard/
 
 # autopus-adk is a separate git repo (sibling), not a submodule
 autopus-adk/

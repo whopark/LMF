@@ -1,0 +1,13 @@
+# Leave pdf_dir blank to default to the script's own directory.
+# Override with an absolute path only if your PDFs live elsewhere.
+# pdf_dir: "D:/LMF_all/pdf"
+mongo_uri: "mongodb://127.0.0.1:27017/"
+db_name: "lab_accreditation"
+collection: "checklist_items"
+
+# Parsing options
+skip_first_pages: 5
+default_years: [2025, 2026]
+
+# Logging
+log_level: "INFO"

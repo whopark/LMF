@@ -1,0 +1,8 @@
+pdf_dir: "/mnt/d/LMF_all/pdf"
+mongo_uri: "mongodb://127.0.0.1:27017/"
+db_name: "lab_accreditation"
+collection: "checklist_items"
+
+# Optional
+skip_first_pages: 5
+default_years: [2025, 2026]
