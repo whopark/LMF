@@ -52,6 +52,9 @@ nul
 .agents/plugins/
 .autopus/cache/
 .autopus/design/imports/
+.autopus/*-manifest.json
+.autopus/context/
+.autopus/plugins/
 # Note: .autopus/specs/, .autopus/brainstorms/, .autopus/project/ are user-authored
 # documents (per .claude/rules/autopus/doc-storage.md) and SHOULD be tracked.
 .mcp.json
