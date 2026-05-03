@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { getDisplayData, getTagClass, formatDescription } from '../utils/helpers.jsx';
+import axios from 'axios';
+import { getDisplayData, getTagClass, formatDescription, API_BASE } from '../utils/helpers.jsx';
 
 function HistoryView({
   historySubMode,
@@ -46,24 +47,32 @@ function CompareView({ loading, changesData, compareYear, compareArea }) {
             {compareArea && ` (${compareArea})`}
           </p>
         </div>
+        {changesData && (
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#94a3b8' }}>
+            <span>변경: <strong style={{ color: '#38bdf8' }}>{changesData.totalChanges}</strong></span>
+            <span>신규: <strong style={{ color: '#38bdf8' }}>{changesData.newItems}</strong></span>
+            <span>수정: <strong style={{ color: '#f8fafc' }}>{changesData.modifiedItems}</strong></span>
+            <span>삭제: <strong style={{ color: '#f87171' }}>{changesData.deletedItems}</strong></span>
+          </div>
+        )}
       </header>
 
       {loading ? (
         <div className="loader-container"><div className="loader">변경 사항 분석 중...</div></div>
       ) : changesData && changesData.changes.length > 0 ? (
-        <div className="compare-container">
-          <div className="compare-header">
-            <div className="compare-header-left">
-              <span className="compare-year-badge before">{changesData.previousYear}년 (수정전)</span>
+        <div className="sbs-container">
+          <div className="sbs-header">
+            <div className="sbs-header-panel left">
+              <span className="sbs-year-badge prev">{changesData.previousYear}년</span>
             </div>
-            <div className="compare-header-right">
-              <span className="compare-year-badge after">{changesData.targetYear}년 (수정후)</span>
+            <div className="sbs-header-panel right">
+              <span className="sbs-year-badge curr">{changesData.targetYear}년</span>
             </div>
           </div>
 
-          <div className="compare-panels">
+          <div className="sbs-items">
             {changesData.changes.map((change, idx) => (
-              <ChangeItem key={`${change.item_number}-${idx}`} change={change} idx={idx} />
+              <SideBySideItem key={`${change.item_number}-${idx}`} change={change} idx={idx} />
             ))}
           </div>
         </div>
@@ -76,151 +85,150 @@ function CompareView({ loading, changesData, compareYear, compareArea }) {
   );
 }
 
-function ChangeItem({ change, idx }) {
+function buildDiffLines(prev, curr) {
+  const lines = [];
+
+  if (prev?.item_type && curr?.item_type && prev.item_type !== curr.item_type) {
+    lines.push({ field: '문항유형', prev: prev.item_type, curr: curr.item_type });
+  }
+  if (prev?.score !== undefined && curr?.score !== undefined && prev.score !== curr.score) {
+    lines.push({ field: '배점', prev: `${prev.score}점`, curr: `${curr.score}점` });
+  }
+  if (prev?.question && curr?.question && prev.question !== curr.question) {
+    lines.push({ field: '질문', prev: prev.question, curr: curr.question });
+  }
+  if (prev?.description && curr?.description && prev.description !== curr.description) {
+    const prevSet = prev.description.split('\n').map(l => l.trim().replace(/^[•\-\*]\s*/, '')).filter(l => l);
+    const currSet = curr.description.split('\n').map(l => l.trim().replace(/^[•\-\*]\s*/, '')).filter(l => l);
+
+    const removed = prevSet.filter(l => l.length > 5 && !currSet.includes(l));
+    const added = currSet.filter(l => l.length > 5 && !prevSet.includes(l));
+
+    removed.forEach(l => lines.push({ field: '설명', prev: l, curr: null, type: 'removed' }));
+    added.forEach(l => lines.push({ field: '설명', prev: null, curr: l, type: 'added' }));
+  }
+  return lines;
+}
+
+function SideBySideItem({ change, idx }) {
   const prev = change.previous;
   const curr = change.current;
+  const isNew = change.change_type === 'NEW';
+  const isDeleted = change.change_type === 'DELETED';
 
-  // Build list of specific changes for inline display
-  const buildChangeLines = () => {
-    const lines = [];
+  const badgeClass = isNew ? 'new' : isDeleted ? 'deleted' : 'modified';
+  const badgeText = isNew ? '신규' : isDeleted ? '삭제' : '수정';
 
-    // Type change
-    if (prev?.item_type && curr?.item_type && prev.item_type !== curr.item_type) {
-      lines.push({
-        before: `문항유형: ${prev.item_type}`,
-        after: `문항유형: ${curr.item_type}`,
-        note: curr.description && prev.description !== curr.description
-          ? `(설명에 관련 세부 조치사항 내용이 추가됨)` : ''
+  const diffLines = (!isNew && !isDeleted) ? buildDiffLines(prev, curr) : [];
+
+  const [reason, setReason] = useState(null);
+  const [reasonLoading, setReasonLoading] = useState(false);
+
+  const generateReason = async () => {
+    setReasonLoading(true);
+    try {
+      const res = await axios.post(`${API_BASE}/llm/reason`, {
+        previous: prev,
+        current: curr,
+        changeType: change.change_type,
+        summary: change.summary,
       });
+      setReason(res.data.reason);
+    } catch (err) {
+      setReason('수정사유 생성에 실패했습니다.');
+    } finally {
+      setReasonLoading(false);
     }
-
-    // Score change
-    if (prev?.score !== undefined && curr?.score !== undefined && prev.score !== curr.score) {
-      lines.push({
-        before: `배점: ${prev.score}점`,
-        after: `배점: ${curr.score}점`
-      });
-    }
-
-    // Question change
-    if (prev?.question && curr?.question && prev.question !== curr.question) {
-      lines.push({
-        before: prev.question,
-        after: curr.question
-      });
-    }
-
-    // Description change - find specific line differences
-    if (prev?.description && curr?.description && prev.description !== curr.description) {
-      const prevLines = prev.description.split('\n').map(l => l.trim()).filter(l => l);
-      const currLines = curr.description.split('\n').map(l => l.trim()).filter(l => l);
-
-      // Find removed lines
-      prevLines.forEach(line => {
-        const cleanLine = line.replace(/^[•\-\*]\s*/, '');
-        const existsInCurr = currLines.some(cl => cl.replace(/^[•\-\*]\s*/, '') === cleanLine);
-        if (!existsInCurr && cleanLine.length > 10) {
-          lines.push({
-            before: cleanLine,
-            after: '(해당 지문 삭제)',
-            isDescChange: true
-          });
-        }
-      });
-
-      // Find added lines
-      currLines.forEach(line => {
-        const cleanLine = line.replace(/^[•\-\*]\s*/, '');
-        const existsInPrev = prevLines.some(pl => pl.replace(/^[•\-\*]\s*/, '') === cleanLine);
-        if (!existsInPrev && cleanLine.length > 10) {
-          lines.push({
-            before: '(해당 지문 없음)',
-            after: cleanLine,
-            isDescChange: true
-          });
-        }
-      });
-
-      // Find modified lines (similar but not exact)
-      prevLines.forEach(prevLine => {
-        const cleanPrevLine = prevLine.replace(/^[•\-\*]\s*/, '');
-        currLines.forEach(currLine => {
-          const cleanCurrLine = currLine.replace(/^[•\-\*]\s*/, '');
-          // Check if lines are similar (share significant words) but not identical
-          if (cleanPrevLine !== cleanCurrLine && cleanPrevLine.length > 10 && cleanCurrLine.length > 10) {
-            const prevWords = cleanPrevLine.split(/\s+/).filter(w => w.length > 2);
-            const currWords = cleanCurrLine.split(/\s+/).filter(w => w.length > 2);
-            const commonWords = prevWords.filter(w => currWords.includes(w));
-            const similarity = commonWords.length / Math.max(prevWords.length, currWords.length);
-
-            if (similarity > 0.5 && similarity < 1) {
-              // Check if not already added
-              const alreadyAdded = lines.some(l =>
-                l.before === cleanPrevLine || l.after === cleanCurrLine
-              );
-              if (!alreadyAdded) {
-                lines.push({
-                  before: cleanPrevLine,
-                  after: cleanCurrLine,
-                  isDescChange: true
-                });
-              }
-            }
-          }
-        });
-      });
-    }
-
-    // If no specific changes detected, show general change
-    if (lines.length === 0) {
-      if (change.change_type === 'NEW') {
-        lines.push({
-          before: '(신규 문항)',
-          after: curr?.question || '새 문항 추가됨',
-          isNew: true
-        });
-      } else if (change.change_type === 'DELETED') {
-        lines.push({
-          before: prev?.question || '삭제된 문항',
-          after: '(문항 삭제됨)',
-          isDeleted: true
-        });
-      }
-    }
-
-    return lines;
   };
-
-  const changeLines = buildChangeLines();
 
   return (
     <motion.div
-      className="change-item-doc"
+      className="sbs-item"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.02 }}
     >
-      <div className="change-item-doc-header">
-        <strong>문항 {change.item_number}</strong>
+      <div className="sbs-item-header">
+        <span className="sbs-item-number">{change.item_number}</span>
+        <span className={`sbs-badge ${badgeClass}`}>{badgeText}</span>
+        <span className="sbs-area">{change.area}</span>
+        <span className="sbs-summary">{change.summary}</span>
       </div>
 
-      <div className="change-item-doc-body">
-        {changeLines.map((line, i) => (
-          <div key={i} className="change-line-doc">
-            <span className="tag-before-doc">|수정전|</span>
-            <span className="change-text-before">{line.before}</span>
-            <span className="arrow-doc">→</span>
-            <span className="tag-after-doc">|수정후|</span>
-            <span className="change-text-after">{line.after}</span>
-            {line.note && <span className="change-note">{line.note}</span>}
-          </div>
-        ))}
+      <div className="sbs-body">
+        {/* NEW item: only right panel */}
+        {isNew && (
+          <>
+            <div className="sbs-panel left empty">
+              <div className="sbs-empty-label">해당 없음</div>
+            </div>
+            <div className="sbs-panel right">
+              {curr?.item_type && <div className="sbs-field"><span className="sbs-field-label">유형</span> <span className="sbs-text-added">{curr.item_type}</span></div>}
+              {curr?.score != null && <div className="sbs-field"><span className="sbs-field-label">배점</span> <span className="sbs-text-added">{curr.score}점</span></div>}
+              {curr?.question && <div className="sbs-question added">{curr.question}</div>}
+              {curr?.description && <div className="sbs-desc added">{curr.description}</div>}
+            </div>
+          </>
+        )}
+
+        {/* DELETED item: only left panel */}
+        {isDeleted && (
+          <>
+            <div className="sbs-panel left">
+              {prev?.item_type && <div className="sbs-field"><span className="sbs-field-label">유형</span> <span className="sbs-text-removed">{prev.item_type}</span></div>}
+              {prev?.score != null && <div className="sbs-field"><span className="sbs-field-label">배점</span> <span className="sbs-text-removed">{prev.score}점</span></div>}
+              {prev?.question && <div className="sbs-question removed">{prev.question}</div>}
+              {prev?.description && <div className="sbs-desc removed">{prev.description}</div>}
+            </div>
+            <div className="sbs-panel right empty">
+              <div className="sbs-empty-label">삭제됨</div>
+            </div>
+          </>
+        )}
+
+        {/* MODIFIED item: both panels, only show diffs */}
+        {!isNew && !isDeleted && (
+          <>
+            <div className="sbs-panel left">
+              {diffLines.map((d, i) => (
+                <div key={i} className="sbs-diff-row">
+                  <span className="sbs-field-label">{d.field}</span>
+                  {d.prev ? (
+                    <span className="sbs-text-removed">{d.prev}</span>
+                  ) : (
+                    <span className="sbs-text-none">—</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="sbs-panel right">
+              {diffLines.map((d, i) => (
+                <div key={i} className="sbs-diff-row">
+                  <span className="sbs-field-label">{d.field}</span>
+                  {d.curr ? (
+                    <span className="sbs-text-added">{d.curr}</span>
+                  ) : (
+                    <span className="sbs-text-none">—</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="change-divider-doc">---</div>
-
-      <div className="change-reason-doc">
-        <span className="tag-reason">|수정사유: {change.summary}|</span>
+      <div className="sbs-reason-bar">
+        {reason ? (
+          <div className="sbs-reason-text">{reason}</div>
+        ) : (
+          <button
+            className="sbs-reason-btn"
+            onClick={generateReason}
+            disabled={reasonLoading}
+          >
+            {reasonLoading ? '분석 중...' : '🤖 수정사유 생성'}
+          </button>
+        )}
       </div>
     </motion.div>
   );
