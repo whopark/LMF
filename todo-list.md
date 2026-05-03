@@ -34,6 +34,17 @@ if (require.main === module) {
   - `tests/api.test.js` — 7개 API 테스트 (filters, items, items/:number)
 - **테스트 명령**: `cd gui/backend && npm run test:run`
 
+### SPEC-TEST-FRONTEND-001 ✅
+
+- **커밋**: `eda36d8 test(frontend): Vitest + React Testing Library 도입`
+- **산출물**:
+  - `vitest.config.js` — jsdom 환경 + React 플러그인
+  - `tests/setup.js` — jest-dom 매처 + matchMedia mock
+  - `tests/FilterContext.test.jsx` — 5개 테스트 (상태 관리, 초기화, 리셋)
+  - `tests/useFilters.test.jsx` — 4개 테스트 (API fetch, 에러 핸들링)
+- **테스트 명령**: `cd gui/frontend && npm run test:run`
+- **전체 테스트**: Backend 14개 + Frontend 9개 = **23개**
+
 ### SPEC-ROUTES-SPLIT-001 ✅
 
 - **커밋**: `0e28304 refactor(backend): routes/api.js 도메인별 분할`
@@ -151,8 +162,9 @@ SPEC-CLEANUP-001 Open Issue Q-COMP-04. 임의값으로 시작했음. 실제 사�
 새 세션에서 처음 실행할 명령어 후보:
 
 ```bash
-# 1. 테스트 확인
-cd gui/backend && npm run test:run
+# 1. 테스트 확인 (전체 23개)
+cd gui/backend && npm run test:run   # 14개
+cd gui/frontend && npm run test:run  # 9개
 
 # 2. 새 기능 또는 리팩토링 요청
 # 모든 후속 SPEC이 완료되었습니다. 새로운 작업을 요청하세요.
@@ -172,10 +184,11 @@ cd gui/backend && npm run test:run
   - 5개 dead code/orphan 정리
 
 ### 2026-05-04 세션
-- **commits**: 12개 (master에 총 27개)
+- **commits**: 15개 (master에 총 30개)
 - **주요 산출물**:
   - 검증 부채 해소 (MongoDB 재import + require 가드)
-  - SPEC-TEST-INTRO-001 완료 (Vitest + supertest + 7개 테스트)
+  - SPEC-TEST-INTRO-001 완료 (Backend Vitest + supertest, 14개 테스트)
+  - SPEC-TEST-FRONTEND-001 완료 (Frontend Vitest + RTL, 9개 테스트)
   - SPEC-ROUTES-SPLIT-001 완료 (api.js 277줄 → 4파일 분할)
   - SPEC-AUTH-001 완료 (API Key 인증 + 7개 테스트)
   - SPEC-CONTEXT-001 완료 (Sidebar 26-prop → React Context)
@@ -183,6 +196,7 @@ cd gui/backend && npm run test:run
   - SPEC-DESIGN-TOKEN-001 완료 (인라인 hex → CSS 변수 토큰화)
   - SPEC-DATA-CLEANUP-001 완료 (ETL v1~v3 파일 5260줄 정리)
   - SPEC-PDF-EMBEDDED-REPO-001 완료 (로컬 .git 1개 정리)
+  - README.md 추가, TDD enforce 복원
 
 ---
 
@@ -191,7 +205,10 @@ cd gui/backend && npm run test:run
 - 한국 임상병리학회 점검표 PDF는 절대 git에 넣지 않는다 (저작권). gitignore가 보호 중이지만 향후 패턴 추가 시 검증 필요.
 - LFS 한도 무료 1GB. checklist_items_final.json은 11MB로 여유 있지만 향후 데이터 증가 시 모니터링.
 - `autopus-adk/`는 형제 repo. parent에서 추적하지 않는다.
-- 테스트 실행: `cd gui/backend && npm run test:run` (14개 테스트)
+- 테스트 실행:
+  - Backend: `cd gui/backend && npm run test:run` (14개)
+  - Frontend: `cd gui/frontend && npm run test:run` (9개)
+  - **전체: 23개 테스트**
 - PATCH 요청 시 `x-api-key` 헤더 필요
 
 🐙
