@@ -1,36 +1,10 @@
 require('dotenv').config();
 
-const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
-const apiRoutes = require('./routes/api');
-const llmRoutes = require('./routes/llm');
+const app = require('./app');
 
-const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lab_accreditation';
-
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: '32kb' }));
-
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
-// API routes
-app.use('/api', apiRoutes);
-app.use('/api/llm', llmRoutes);
-
-// Root route to serve React app
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
-
-// Catch-all route for React Router
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
 
 // Connect to MongoDB and start server
 mongoose.connect(MONGO_URI)
