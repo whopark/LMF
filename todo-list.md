@@ -136,9 +136,9 @@ SPEC-CLEANUP-001 Open Issue Q-COMP-04. 임의값으로 시작했음. 실제 사�
 
 SPEC-CLEANUP-001 P5에서 일시 완화. 테스트 인프라 도입 완료(SPEC-TEST-INTRO-001)로 복원 조건 충족.
 
-### D. README.md 부재
+### ~~D. README.md 부재~~ ✅ 해결
 
-GitHub `whopark/LMF` 페이지가 비어 보인다. `.autopus/project/product.md`의 "한 줄 설명" + "핵심 기능" 표를 끌어다 README로 만들면 즉시 의미 있는 첫 페이지가 된다.
+`9dd0945 docs: README.md 추가` — product.md + ARCHITECTURE.md 기반으로 작성 완료.
 
 ### E. License 결정
 
