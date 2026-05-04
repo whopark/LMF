@@ -10,8 +10,13 @@ All notable changes to this project will be documented in this file.
 - **SEC-003**: 보안 이벤트 로깅 추가 (AUTH_FAILURE, AUTHZ_DENIED, RATE_LIMIT_EXCEEDED)
 
 ### Added
+- **CI Pipeline**: GitHub Actions 기반 CI 워크플로우 (`.github/workflows/ci.yml`)
+  - Backend Tests: `npm install` → `test:run` (mongodb-memory-server)
+  - Frontend Build & Tests: `test:run` → `test:coverage` → `build`
+  - Artifacts: `frontend-dist` (30일), `frontend-coverage` (14일)
 - Canary 런타임 검증 결과 저장 (`.autopus/canary/latest.json`)
 - 보안 로거 유틸리티 (`gui/backend/utils/securityLogger.js`)
+- Frontend 테스트 커버리지 도구 (`@vitest/coverage-v8`)
 
 ### Changed
 - Backend 테스트 14개 통과 (SPEC-TEST-INTRO-001)
