@@ -64,7 +64,7 @@ python pdf/import_to_mongodb.py
 | 영역 | 도구 | 현재 상태 |
 |---|---|---|
 | Backend 통합 | Vitest 4.1.5 + supertest 7.2.2 | 14개 테스트 (SPEC-TEST-INTRO-001 완료) |
-| Frontend 단위 | Vitest 4.1.5 + @testing-library/react 16.3.2 | 9개 테스트 (SPEC-TEST-FRONTEND-001 완료) |
+| Frontend 단위 | Vitest 4.1.5 + @testing-library/react 16.3.2 + @vitest/coverage-v8 | 9개 테스트 (SPEC-TEST-FRONTEND-001 완료) |
 | Frontend E2E | Playwright (`.playwright-mcp/` 캐시 존재, 스크립트는 미커밋) | 수동 실행만 |
 
 `autopus.yaml: methodology.enforce: true` — TDD 강제 모드 활성화됨
@@ -77,7 +77,32 @@ python pdf/import_to_mongodb.py
 
 ## CI/CD
 
-미구성. 모든 빌드/배포는 로컬 수동.
+GitHub Actions 기반 CI 파이프라인 구성됨 (`.github/workflows/ci.yml`)
+
+| 트리거 | 대상 브랜치 |
+|--------|------------|
+| push | master |
+| pull_request | master |
+
+### Jobs (병렬 실행)
+
+| Job | 작업 | 환경 |
+|-----|------|------|
+| **Backend Tests** | `npm install` → `npm run test:run` | ubuntu-latest, Node.js 20 |
+| **Frontend Build & Tests** | `npm install` → `test:run` → `test:coverage` → `build` | ubuntu-latest, Node.js 20 |
+
+### Artifacts
+
+| Artifact | 용도 | 보존 기간 |
+|----------|------|----------|
+| `frontend-dist` | 빌드 결과물 (수동 배포용) | 30일 |
+| `frontend-coverage` | 테스트 커버리지 리포트 | 14일 |
+
+### 배포
+
+자동 배포 미구성. 수동 배포 계획:
+- Frontend: GitHub Pages (또는 별도 정적 호스팅)
+- Backend: 별도 서버 수동 배포
 
 ## Architecture Patterns
 
