@@ -88,8 +88,21 @@ GitHub Actions 기반 CI 파이프라인 구성됨 (`.github/workflows/ci.yml`)
 
 | Job | 작업 | 환경 |
 |-----|------|------|
-| **Backend Tests** | `npm install` → `npm run test:run` | ubuntu-latest, Node.js 20 |
+| **Backend Tests** | `npm install` → `npm run test:run` | ubuntu-latest, Node.js 20, MongoDB 7.0 (서비스 컨테이너) |
 | **Frontend Build & Tests** | `npm install` → `test:run` → `test:coverage` → `build` | ubuntu-latest, Node.js 20 |
+
+### CI 환경 특이사항
+
+| 항목 | 로컬 | CI |
+|------|------|-----|
+| MongoDB | mongodb-memory-server (자동 다운로드) | 서비스 컨테이너 (mongo:7.0) |
+| DB 연결 | 자동 생성 URI | `MONGO_URI` 환경변수 (`mongodb://localhost:27017/test`) |
+| 테스트 실행 | 기본 병렬 | 순차 실행 (`fileParallelism: false`) |
+
+**Vitest 설정** (`gui/backend/vitest.config.js`):
+- `fileParallelism: false` — 파일 간 순차 실행으로 DB 연결 공유
+- `sequence.hooks: 'stack'` — 훅 실행 순서 보장
+- 각 테스트 파일에서 `beforeEach`로 컬렉션 정리 (테스트 격리)
 
 ### Artifacts
 
