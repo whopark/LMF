@@ -1,5 +1,7 @@
 # 우수검사실 신임인증 심사점검표 리뷰
 
+![CI](https://github.com/whopark/LMF/actions/workflows/ci.yml/badge.svg?branch=master)
+
 **Laboratory Accreditation Checklist Review System**
 
 대한임상병리학재단/임상병리사회의 연도별 우수검사실 신임인증 심사점검표를 데이터베이스화하고, 연도 간 변경 사항을 시각적으로 비교하며, LLM으로 변경 이유를 자동 생성하는 의원/검사실용 도구.
