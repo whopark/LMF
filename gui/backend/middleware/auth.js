@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { logAuthFailure, logAuthzDenied, logConfigError } = require('../utils/securityLogger');
 
 /**
  * Timing-safe string comparison to prevent timing attacks
@@ -26,15 +27,17 @@ function requireApiKey(req, res, next) {
   const validKey = process.env.API_KEY;
 
   if (!validKey) {
-    console.error('API_KEY not configured in environment');
+    logConfigError('API_KEY not configured in environment');
     return res.status(500).json({ message: 'Server authentication not configured' });
   }
 
   if (!apiKey) {
+    logAuthFailure(req, 'Missing API key');
     return res.status(401).json({ message: 'API key required' });
   }
 
   if (!timingSafeCompare(apiKey, validKey)) {
+    logAuthzDenied(req, 'Invalid API key');
     return res.status(403).json({ message: 'Invalid API key' });
   }
 

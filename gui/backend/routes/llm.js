@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const Anthropic = require('@anthropic-ai/sdk').default;
+const { logRateLimitExceeded } = require('../utils/securityLogger');
 
 const router = express.Router();
 
@@ -16,6 +17,10 @@ const reasonLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please wait a moment.' },
+  handler: (req, res) => {
+    logRateLimitExceeded(req);
+    res.status(429).json({ error: 'Too many requests. Please wait a moment.' });
+  },
 });
 
 // Generate modification reason using Claude
