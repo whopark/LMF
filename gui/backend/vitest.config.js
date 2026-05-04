@@ -6,6 +6,12 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./tests/setup.js'],
     testTimeout: 30000,
-    hookTimeout: 60000, // CI에서 mongodb-memory-server 초기화 시간
+    hookTimeout: 60000,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true, // 단일 프로세스에서 순차 실행 (DB 연결 공유)
+      },
+    },
   },
 });
