@@ -46,4 +46,7 @@ export function getDisplayData(item) {
   return { question: q, description: d };
 }
 
-export const API_BASE = '/api';
+// API Base URL: uses VITE_API_URL in production, falls back to /api for dev proxy
+export const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
