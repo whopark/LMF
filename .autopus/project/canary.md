@@ -14,7 +14,7 @@
 |----|------|--------|--------|---------|
 | H1 | build | `cd gui/frontend && npm run build` | exit 0, `dist/` 생성 | 90s |
 | H2 | build | `cd gui/backend && node -c server.js` | exit 0 (syntax OK) | 10s |
-| H3 | module-load | `cd gui/backend && node -e "require('./routes/api.js'); require('./routes/llm.js'); require('./models/ChecklistItem.js')"` | exit 0 | 10s |
+| H3 | module-load | `cd gui/backend && node -e "require('./routes/api.js'); require('./routes/llm.js'); require('./models/ChecklistItem.js'); require('./middleware/auth.js')"` | exit 0 | 10s |
 | H4 | endpoint | `GET http://localhost:5000/api/filters` | status 200, JSON with `years` array non-empty | 5s |
 | H5 | endpoint | `GET http://localhost:5000/api/items?limit=1` | status 200, items.length == 1 | 5s |
 | H6 | endpoint | `GET http://localhost:5000/api/changes/2024` | status 200, `targetYear == 2024` | 8s |
@@ -22,31 +22,38 @@
 | H8 | browser | navigate `http://localhost:5000/` | no console errors, `.sidebar` and `.items-grid` visible | 10s |
 | H9 | browser | history compare view | `.sbs-container` visible after year select | 12s |
 | H10 | rate-limit | 21번 연속 `POST /api/llm/reason` | 21번째 응답 status 429 | 30s |
+| H11 | auth | `PATCH /api/items/{id}` without X-API-Key | status 401 Unauthorized | 5s |
+| H12 | test | `cd gui/backend && npm test` | exit 0, 14 tests pass | 30s |
+| H13 | test | `cd gui/frontend && npm test` | exit 0, 9 tests pass | 30s |
 
 ## Detection Sources
 
 - **Build (H1, H2)**: `gui/frontend/package.json` scripts.build, `gui/backend/server.js` (entry)
-- **Module load (H3)**: SPEC-CLEANUP-001 P3에서 도입한 import-check 패턴
+- **Module load (H3)**: SPEC-CLEANUP-001 P3에서 도입한 import-check 패턴, `middleware/auth.js` (SPEC-AUTH-001)
 - **Endpoint (H4-H7)**: `gui/backend/routes/api.js`, `server.js:24-32` catch-all
 - **Browser (H8, H9)**: `gui/frontend/src/components/{Sidebar,DashboardView,HistoryView}.jsx`, scenarios.md S12/S15
 - **Rate-limit (H10)**: `gui/backend/routes/llm.js`, scenarios.md S10
+- **Auth (H11)**: `gui/backend/middleware/auth.js`, scenarios.md S17 (SPEC-AUTH-001)
+- **Test (H12, H13)**: `gui/backend/tests/`, `gui/frontend/src/tests/` (SPEC-TEST-INTRO-001, SPEC-TEST-FRONTEND-001)
 
 ## Critical vs Non-Critical
 
 | 분류 | 항목 | 실패 시 |
 |---|---|---|
-| Critical | H1, H2, H3, H4, H7 | 즉시 FAIL — 시스템 운영 불가 |
-| Non-Critical | H5, H6, H8, H9 | WARN — 데이터/UI 부분 결함 |
+| Critical | H1, H2, H3, H4, H7, H11 | 즉시 FAIL — 시스템 운영 불가 |
+| Non-Critical | H5, H6, H8, H9, H12, H13 | WARN — 데이터/UI 부분 결함 또는 테스트 실패 |
 | Optional | H10 | SKIP — Anthropic API 키 미설정 시 |
 
 ## Run Order
 
 ```
+H12, H13 병렬 (테스트 스위트 — 선택적, 빠른 피드백)
+   ↓
 H1 (frontend build) → H2 (backend syntax) → H3 (module load)
    ↓ all pass
 서버 시작: node gui/backend/server.js
    ↓
-H4, H5, H6 병렬 (API smoke)
+H4, H5, H6, H11 병렬 (API smoke + 인증)
 H7 (root HTML)
    ↓
 H8, H9 (browser flow)
@@ -63,6 +70,8 @@ H10 (rate limit, optional)
 | H7 404 | `frontend/dist` 미생성 | H1 재실행 |
 | H8 console errors | dist 빌드 누락된 컴포넌트 | git diff로 누락 확인, npm run build 재실행 |
 | H10 429 미발생 | rate-limit 미동작 | `routes/llm.js` 의 `rateLimit()` 호출 확인 |
+| H11 401 미발생 | auth middleware 미적용 | `routes/api.js`에서 `requireApiKey` 미들웨어 확인 |
+| H12/H13 test 실패 | 테스트 코드 오류 | `npm test -- --reporter=verbose`로 실패 테스트 확인 |
 
 ## Browser Health Targets
 

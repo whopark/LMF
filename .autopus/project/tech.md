@@ -63,12 +63,11 @@ python pdf/import_to_mongodb.py
 
 | 영역 | 도구 | 현재 상태 |
 |---|---|---|
-| Backend unit | (미도입) | 0개 — `methodology.enforce: false` |
-| Backend integration | (미도입) | 0개 |
-| Frontend unit | (미도입) | 0개 |
+| Backend 통합 | Vitest 4.1.5 + supertest 7.2.2 | 14개 테스트 (SPEC-TEST-INTRO-001 완료) |
+| Frontend 단위 | Vitest 4.1.5 + @testing-library/react 16.3.2 | 9개 테스트 (SPEC-TEST-FRONTEND-001 완료) |
 | Frontend E2E | Playwright (`.playwright-mcp/` 캐시 존재, 스크립트는 미커밋) | 수동 실행만 |
 
-후속 SPEC: SPEC-TEST-INTRO-001 (가칭) — Vitest + supertest 도입 후 enforce 복원
+`autopus.yaml: methodology.enforce: true` — TDD 강제 모드 활성화됨
 
 ## Linting / Format
 
@@ -98,7 +97,7 @@ python pdf/import_to_mongodb.py
 - API key는 `.env`에서만 (gitignored)
 - ANTHROPIC_API_KEY 누출 시 LLM 라우트로만 영향 (rate limit + 32KB body limit이 한도 캡)
 - CORS: `app.use(cors())` 와일드카드 — 의원 내부망 가정. 외부 노출 시 origin 화이트리스트 필요
-- 인증 부재: 모든 PATCH/POST 무방비 (SPEC-AUTH-001 후속 권장)
+- API Key 인증: PATCH 엔드포인트 보호 완료 (SPEC-AUTH-001)
 - MongoDB injection: regex escape 적용, query는 정적 필드만 사용
 
 ## 외부 시스템 연동 포인트
