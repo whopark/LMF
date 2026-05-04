@@ -3,6 +3,11 @@ import request from 'supertest';
 import app from '../app.js';
 import ChecklistItem from '../models/ChecklistItem.js';
 
+// Clean up before each test to ensure isolation
+beforeEach(async () => {
+  await ChecklistItem.deleteMany({});
+});
+
 const TEST_API_KEY = 'test-api-key-12345';
 
 const sampleItem = {
