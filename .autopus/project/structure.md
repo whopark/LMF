@@ -5,7 +5,7 @@
 ## 트리
 
 ```
-e:/LMF_all/
+d:/LMF_all/
 ├── gui/                              # 제품 코드 (React + Express)
 │   ├── backend/
 │   │   ├── server.js                 # Entry: Express app, mongoose connect
@@ -14,6 +14,11 @@ e:/LMF_all/
 │   │   │   └── llm.js                # POST /reason — Anthropic proxy + rate limit
 │   │   ├── models/ChecklistItem.js   # Mongoose schema (단일)
 │   │   ├── import-data.js            # JSON → MongoDB import (재실행 가능)
+│   │   ├── middleware/auth.js        # API Key 검증 미들웨어
+│   │   ├── tests/                    # Backend 테스트 (Vitest + supertest)
+│   │   │   ├── setup.js              # 테스트 환경 설정
+│   │   │   ├── api.test.js           # API 통합 테스트
+│   │   │   └── auth.test.js          # 인증 테스트
 │   │   ├── format_changes.py         # 일회성 데이터 변환 스크립트
 │   │   ├── package.json
 │   │   ├── package-lock.json
@@ -33,7 +38,12 @@ e:/LMF_all/
 │           │   ├── HistoryView.jsx   # Compare + Track 서브뷰
 │           │   └── ItemModal.jsx     # 상세 + 편집
 │           ├── hooks/useFilters.js   # ⚠️ unused (dead code)
+│           ├── contexts/FilterContext.jsx  # 전역 필터 상태 관리
 │           ├── utils/helpers.jsx     # getDisplayData, formatDescription, getTagClass
+│           ├── tests/                # Frontend 테스트 (Vitest + RTL)
+│           │   ├── setup.js
+│           │   ├── FilterContext.test.jsx
+│           │   └── useFilters.test.jsx
 │           └── styles/               # 분할 CSS (SPEC-CLEANUP-001 P2)
 │               ├── tokens.css        # palette CSS variables (30 vars)
 │               ├── layout.css        # app shell (140줄)

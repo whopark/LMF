@@ -47,7 +47,7 @@
 | Rule | Status | 근거 |
 |---|---|---|
 | file-size-limit (300줄 하드 한계) | **PASS** | 최대 `views/compare-sbs.css` 275줄 (legacy CSS 삭제됨) |
-| TDD enforce | **PASS** | `autopus.yaml: methodology.enforce: true`. Vitest + supertest 14개 테스트 도입 완료 (SPEC-TEST-INTRO-001) |
+| TDD enforce | **PASS** | `autopus.yaml: methodology.enforce: true`. Backend 14개 + Frontend 3개 테스트 (Vitest + supertest + RTL) |
 | doc-storage | **PASS** | SPEC-CLEANUP-001은 backend+frontend+config 변경이라 root `.autopus/specs/` 사용 |
 | language-policy | **PASS** | 코드 주석 en, 커밋 ko, 응답 ko |
 | project-identity | **PASS** | 제품은 `gui/`이고 `.autopus/`는 ADK 하네스 메타 — 혼동하지 않음 |

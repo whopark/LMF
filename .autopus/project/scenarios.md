@@ -119,6 +119,33 @@
 - **Depends**: N/A
 - **Status**: active
 
+### S17: patch_requires_auth — API Key 없이 PATCH 거부
+
+- **Command**: `curl -s -o /dev/null -w "%{http_code}" -X PATCH -H "Content-Type: application/json" -d '{"about_item.score": 5}' "http://localhost:5000/api/items/{id}"`
+- **Precondition**: 유효한 ObjectId 확보, API Key 미포함
+- **Expect**: HTTP 401 Unauthorized
+- **Verify**: status_code(401)
+- **Depends**: S2
+- **Status**: active
+
+### S18: patch_with_valid_api_key — 유효한 API Key로 PATCH 성공
+
+- **Command**: `curl -s -X PATCH -H "Content-Type: application/json" -H "X-API-Key: {valid_api_key}" -d '{"about_item.score": 5}' "http://localhost:5000/api/items/{id}"`
+- **Precondition**: 유효한 ObjectId + 유효한 API_KEY 설정 (`.env`)
+- **Expect**: 200 + 업데이트된 item 반환
+- **Verify**: status_code(200), json_path("$.about_item.score", 5)
+- **Depends**: S2
+- **Status**: active
+
+### S19: patch_with_invalid_api_key — 잘못된 API Key 거부
+
+- **Command**: `curl -s -o /dev/null -w "%{http_code}" -X PATCH -H "Content-Type: application/json" -H "X-API-Key: invalid-key" -d '{"about_item.score": 5}' "http://localhost:5000/api/items/{id}"`
+- **Precondition**: 유효한 ObjectId 확보
+- **Expect**: HTTP 403 Forbidden
+- **Verify**: status_code(403)
+- **Depends**: S2
+- **Status**: active
+
 ---
 
 ## Frontend Scenarios (Playwright 기반)
@@ -172,7 +199,7 @@
 | 기능 (product.md) | 시나리오 |
 |---|---|
 | F1: 필터링/검색 | S1, S2, S3, S13 |
-| F2: 인라인 편집 | S6, S7, S14 |
+| F2: 인라인 편집 | S6, S7, S14, S17, S18, S19 |
 | F3: 연도별 추적 | S4, S5 |
 | F4: 연도 간 비교 | S8, S15 |
 | F5: LLM 수정사유 | S9, S10, S16 |
@@ -180,6 +207,6 @@
 
 ## Out of Scope
 
-- 인증 시나리오 (현재 인증 미구현)
 - 다중 사용자 동시 편집 충돌
 - MongoDB 연결 실패 복구 (현재는 startup 시 1회 시도 후 abort)
+- RBAC (Role-Based Access Control) — 현재는 API Key 단일 레벨

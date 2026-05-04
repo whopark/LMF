@@ -4,7 +4,7 @@
 
 ## 루트 Repo 역할
 
-`e:/LMF_all` 디렉토리의 git repo는 **product + meta workspace 혼합형**이다.
+`d:/LMF_all` 디렉토리의 git repo는 **product + meta workspace 혼합형**이다.
 
 | 추적 대상 | 카테고리 |
 |---|---|
