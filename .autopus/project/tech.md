@@ -100,9 +100,14 @@ GitHub Actions 기반 CI 파이프라인 구성됨 (`.github/workflows/ci.yml`)
 
 ### 배포
 
-자동 배포 미구성. 수동 배포 계획:
-- Frontend: GitHub Pages (또는 별도 정적 호스팅)
-- Backend: 별도 서버 수동 배포
+| 대상 | 플랫폼 | 방식 | URL |
+|------|--------|------|-----|
+| Frontend | GitHub Pages | CI 성공 시 자동 배포 | https://whopark.github.io/LMF/ |
+| Backend | 별도 서버 | 수동 배포 | (미구성) |
+
+**배포 워크플로우** (`.github/workflows/deploy.yml`):
+- 트리거: CI 워크플로우 성공 시 자동 실행 (`workflow_run`)
+- 수동 배포: Actions 탭에서 `workflow_dispatch` 가능
 
 ## Architecture Patterns
 
