@@ -5,9 +5,14 @@ import { beforeAll, afterAll, afterEach } from 'vitest';
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-  await mongoose.connect(uri);
+  // CI에서는 서비스 컨테이너 사용, 로컬에서는 in-memory 서버 사용
+  const uri = process.env.MONGO_URI;
+  if (uri) {
+    await mongoose.connect(uri);
+  } else {
+    mongoServer = await MongoMemoryServer.create();
+    await mongoose.connect(mongoServer.getUri());
+  }
 });
 
 afterAll(async () => {

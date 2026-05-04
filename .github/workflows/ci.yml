@@ -22,6 +22,12 @@ jobs:
       run:
         working-directory: gui/backend
 
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,20 +37,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Cache MongoDB binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/mongodb-binaries
-          key: mongodb-binaries-7.0.4
-
       - name: Install dependencies
         run: npm install
 
       - name: Run tests
         run: npm run test:run
         env:
-          MONGOMS_VERSION: 7.0.4
-          MONGOMS_PREFER_GLOBAL_PATH: 1
+          MONGO_URI: mongodb://localhost:27017/test
 
   # ─────────────────────────────────────────────────────────────
   # Frontend Job: Install, Build, Test
