@@ -6,8 +6,26 @@ const llmRoutes = require('./routes/llm');
 
 const app = express();
 
+// CORS whitelist configuration
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:5000', 'http://localhost:5173', 'http://127.0.0.1:5000', 'http://127.0.0.1:5173'];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (same-origin, Postman, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy: Origin not allowed'));
+    }
+  },
+  credentials: true,
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '32kb' }));
 
 // Serve static files from the React app
