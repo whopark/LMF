@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-04T20:51:45Z",
+  "commit": "a8e8225",
+  "context": "Post security fixes (SEC-001, SEC-002, SEC-003) - Full runtime verification",
+  "build": {
+    "status": "pass",
+    "checks": [
+      {"id": "H1", "name": "frontend build", "status": "pass", "duration_ms": 3930, "output": "dist/ created, 391.17 kB JS"},
+      {"id": "H2", "name": "backend syntax", "status": "pass", "duration_ms": 100, "output": "syntax OK"},
+      {"id": "H3", "name": "module load", "status": "pass", "duration_ms": 200, "output": "api.js, llm.js, ChecklistItem.js, auth.js loaded"}
+    ]
+  },
+  "tests": {
+    "status": "pass",
+    "total": 23,
+    "passed": 23,
+    "failed": 0,
+    "checks": [
+      {"id": "H12", "name": "backend tests", "status": "pass", "count": 14, "duration_ms": 1840},
+      {"id": "H13", "name": "frontend tests", "status": "pass", "count": 9, "duration_ms": 2060}
+    ]
+  },
+  "endpoint": {
+    "status": "pass",
+    "checks": [
+      {"id": "H4", "name": "GET /api/filters", "status": "pass", "http_code": 200, "validation": "years array non-empty (7 years)"},
+      {"id": "H5", "name": "GET /api/items?limit=1", "status": "pass", "http_code": 200, "validation": "items returned"},
+      {"id": "H6", "name": "GET /api/changes/2024", "status": "pass", "http_code": 200, "validation": "targetYear == 2024, 277 changes"},
+      {"id": "H7", "name": "GET /", "status": "pass", "http_code": 200, "validation": "HTML contains 우수검사실"}
+    ]
+  },
+  "auth": {
+    "status": "pass",
+    "checks": [
+      {"id": "H11a", "name": "PATCH without API key", "status": "pass", "http_code": 401, "response": "API key required"},
+      {"id": "H11b", "name": "PATCH with wrong API key", "status": "pass", "http_code": 403, "response": "Invalid API key"},
+      {"id": "H11c", "name": "PATCH with correct API key", "status": "pass", "http_code": 400, "response": "passed auth, business logic rejection"}
+    ]
+  },
+  "security_logging": {
+    "status": "pass",
+    "events_captured": [
+      {"event": "AUTH_FAILURE", "level": "WARN", "logged": true},
+      {"event": "AUTHZ_DENIED", "level": "WARN", "logged": true}
+    ]
+  },
+  "browser": {
+    "status": "skip",
+    "reason": "Browser automation not available in current environment"
+  },
+  "rate_limit": {
+    "status": "skip",
+    "reason": "H10 requires Anthropic API key for full test"
+  },
+  "security_fixes_verified": {
+    "SEC-001": {"name": "CORS whitelist", "file": "gui/backend/app.js", "verified": true},
+    "SEC-002": {"name": "timing-safe API key", "file": "gui/backend/middleware/auth.js", "verified": true, "runtime_test": "401/403 responses correct"},
+    "SEC-003": {"name": "security event logging", "verified": true, "runtime_test": "AUTH_FAILURE and AUTHZ_DENIED events logged"}
+  },
+  "verdict": "pass"
+}
