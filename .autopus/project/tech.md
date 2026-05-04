@@ -96,8 +96,9 @@ python pdf/import_to_mongodb.py
 
 - API key는 `.env`에서만 (gitignored)
 - ANTHROPIC_API_KEY 누출 시 LLM 라우트로만 영향 (rate limit + 32KB body limit이 한도 캡)
-- CORS: `app.use(cors())` 와일드카드 — 의원 내부망 가정. 외부 노출 시 origin 화이트리스트 필요
-- API Key 인증: PATCH 엔드포인트 보호 완료 (SPEC-AUTH-001)
+- CORS: whitelist 방식 (SEC-001) — `CORS_ORIGINS` 환경변수로 허용 origin 설정
+- API Key 인증: timing-safe 비교 (SEC-002) — PATCH 엔드포인트 보호 완료 (SPEC-AUTH-001)
+- 보안 이벤트 로깅: JSON 구조화 로그 (SEC-003) — AUTH_FAILURE, AUTHZ_DENIED 이벤트 기록
 - MongoDB injection: regex escape 적용, query는 정적 필드만 사용
 
 ## 외부 시스템 연동 포인트
