@@ -1,6 +1,7 @@
 # 우수검사실 신임인증 심사점검표 리뷰
 
 ![CI](https://github.com/whopark/LMF/actions/workflows/ci.yml/badge.svg?branch=master)
+![Deploy](https://github.com/whopark/LMF/actions/workflows/deploy.yml/badge.svg)
 
 **Laboratory Accreditation Checklist Review System**
 
