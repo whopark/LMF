@@ -1,3 +1,22 @@
+const crypto = require('crypto');
+
+/**
+ * Timing-safe string comparison to prevent timing attacks
+ */
+function timingSafeCompare(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') {
+    return false;
+  }
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Compare against itself to maintain constant time
+    crypto.timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 /**
  * API Key authentication middleware
  * Validates x-api-key header against API_KEY environment variable
@@ -15,7 +34,7 @@ function requireApiKey(req, res, next) {
     return res.status(401).json({ message: 'API key required' });
   }
 
-  if (apiKey !== validKey) {
+  if (!timingSafeCompare(apiKey, validKey)) {
     return res.status(403).json({ message: 'Invalid API key' });
   }
 
