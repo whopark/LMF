@@ -11,12 +11,22 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **CI Pipeline**: GitHub Actions 기반 CI 워크플로우 (`.github/workflows/ci.yml`)
-  - Backend Tests: `npm install` → `test:run` (mongodb-memory-server)
+  - Backend Tests: `npm install` → `test:run` (MongoDB 7.0 서비스 컨테이너)
   - Frontend Build & Tests: `test:run` → `test:coverage` → `build`
   - Artifacts: `frontend-dist` (30일), `frontend-coverage` (14일)
+- **GitHub Pages 자동 배포**: CI 성공 시 자동 배포 (`.github/workflows/deploy.yml`)
+  - URL: https://whopark.github.io/LMF/
+  - 트리거: `workflow_run` (CI 성공 시) 또는 `workflow_dispatch` (수동)
+
 - Canary 런타임 검증 결과 저장 (`.autopus/canary/latest.json`)
 - 보안 로거 유틸리티 (`gui/backend/utils/securityLogger.js`)
 - Frontend 테스트 커버리지 도구 (`@vitest/coverage-v8`)
+
+### Fixed
+- **CI 테스트 격리**: MongoDB 서비스 컨테이너 + Vitest 순차 실행으로 테스트 격리 문제 해결
+  - `fileParallelism: false` — 파일 간 순차 실행
+  - `sequence.hooks: 'stack'` — 훅 실행 순서 보장
+  - 각 테스트 파일에서 `beforeEach`로 컬렉션 정리
 
 ### Changed
 - Backend 테스트 14개 통과 (SPEC-TEST-INTRO-001)
