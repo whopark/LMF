@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: lmf-backend
+    runtime: node
+    region: singapore  # 한국에서 가장 가까운 리전
+    plan: free
+    rootDir: gui/backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false  # Render 대시보드에서 직접 설정
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+    healthCheckPath: /api/filters
