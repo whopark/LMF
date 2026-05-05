@@ -22,6 +22,6 @@ const checklistItemSchema = new mongoose.Schema({
   }
 });
 
-const ChecklistItem = mongoose.models.ChecklistItem || mongoose.model('ChecklistItem', checklistItemSchema, 'checklist_items');
+const ChecklistItem = mongoose.models.ChecklistItem || mongoose.model('ChecklistItem', checklistItemSchema, 'lab_checklists_2026_v8');
 
 module.exports = ChecklistItem;
