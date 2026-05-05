@@ -7,9 +7,16 @@ const llmRoutes = require('./routes/llm');
 const app = express();
 
 // CORS whitelist configuration
+const defaultOrigins = [
+  'http://localhost:5000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5000',
+  'http://127.0.0.1:5173',
+  'https://whopark.github.io'
+];
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:5000', 'http://localhost:5173', 'http://127.0.0.1:5000', 'http://127.0.0.1:5173'];
+  : defaultOrigins;
 
 const corsOptions = {
   origin: (origin, callback) => {
