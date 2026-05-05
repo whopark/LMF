@@ -9,8 +9,8 @@ WORKDIR /app
 # Copy backend package files
 COPY gui/backend/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (production only)
+RUN npm ci --omit=dev
 
 # Copy backend source code
 COPY gui/backend/ ./
