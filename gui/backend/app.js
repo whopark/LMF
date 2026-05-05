@@ -31,6 +31,20 @@ app.use(express.json({ limit: '32kb' }));
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', version: '2.0.0', timestamp: '2026-05-05T20:00:00Z' });
+});
+
+// API version endpoint
+app.get('/api/version', (req, res) => {
+  res.json({
+    version: '2.0.0',
+    features: ['nested-aggregation', 'flattened-items'],
+    buildTime: '2026-05-05T20:00:00Z'
+  });
+});
+
 // API routes
 app.use('/api', apiRoutes);
 app.use('/api/llm', llmRoutes);
