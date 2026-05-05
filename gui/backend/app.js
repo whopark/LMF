@@ -1,10 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const apiRoutes = require('./routes/api');
 const llmRoutes = require('./routes/llm');
 
 const app = express();
+
+// Check if frontend dist exists (not in Docker)
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+const hasFrontend = fs.existsSync(frontendDistPath);
 
 // CORS whitelist configuration
 const defaultOrigins = [
@@ -35,8 +40,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '32kb' }));
 
-// Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// Serve static files from the React app (only if frontend exists)
+if (hasFrontend) {
+  app.use(express.static(frontendDistPath));
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -56,14 +63,24 @@ app.get('/api/version', (req, res) => {
 app.use('/api', apiRoutes);
 app.use('/api/llm', llmRoutes);
 
-// Root route to serve React app
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
+// Root and catch-all routes (only if frontend exists)
+if (hasFrontend) {
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
 
-// Catch-all route for React Router
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+} else {
+  // API-only mode
+  app.get('/', (req, res) => {
+    res.json({
+      name: 'LMF API',
+      version: '2.0.0',
+      endpoints: ['/api/items', '/api/filters', '/api/items/:code', '/health']
+    });
+  });
+}
 
 module.exports = app;
