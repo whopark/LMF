@@ -1,7 +1,7 @@
 # LMF Backend Dockerfile
 # Build from repository root, targeting gui/backend
 
-FROM node:20-alpine
+FROM node:22-alpine
 
 # Set working directory
 WORKDIR /app
@@ -10,7 +10,7 @@ WORKDIR /app
 COPY gui/backend/package*.json ./
 
 # Install dependencies (production only)
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy backend source code
 COPY gui/backend/ ./
