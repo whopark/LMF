@@ -2,10 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { FilterProvider, useFilterContext } from '../src/contexts/FilterContext';
 
-// Mock useFilters hook
+// Mock useFilters hook - areas now return {code, name} objects
 vi.mock('../src/hooks/useFilters', () => ({
   useFilters: () => ({
-    filters: { years: [2024, 2023, 2022], areas: ['01 검사실운영', '07 종합검증'], subCategories: [] },
+    filters: {
+      years: [2024, 2023, 2022],
+      areas: [
+        { code: '01', name: '검사실운영' },
+        { code: '07', name: '종합검증' }
+      ],
+      subCategories: []
+    },
     loading: false
   })
 }));
@@ -49,7 +56,8 @@ describe('FilterContext', () => {
     });
 
     expect(screen.getByTestId('selectedYear')).toHaveTextContent('2024');
-    expect(screen.getByTestId('selectedArea')).toHaveTextContent('01 검사실운영');
+    // selectedArea now stores the code value, not the display name
+    expect(screen.getByTestId('selectedArea')).toHaveTextContent('01');
   });
 
   it('allows updating viewMode', async () => {

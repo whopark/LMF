@@ -40,7 +40,8 @@ export function FilterProvider({ children }) {
       setSelectedYear(sortedYears[0].toString());
     }
     if (filters.areas.length > 0) {
-      setSelectedArea(filters.areas[0]);
+      // areas is now an array of {code, name} objects
+      setSelectedArea(filters.areas[0].code);
     }
   }, [filters]);
 

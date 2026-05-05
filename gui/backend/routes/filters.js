@@ -7,7 +7,22 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const years = await ChecklistItem.distinct('year');
-    const categories = await ChecklistItem.distinct('category');
+
+    // Get unique categories with their display names from title field
+    // Title format: "{code}.{name}_{year}" e.g., "01.검사실운영_2026"
+    const categoriesWithNames = await ChecklistItem.aggregate([
+      { $group: { _id: '$category', title: { $first: '$title' } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Extract display name from title (remove code prefix and year suffix)
+    const areas = categoriesWithNames.map(cat => {
+      const title = cat.title || '';
+      // Parse "01.검사실운영_2026" -> "검사실운영"
+      const match = title.match(/^\d+\.(.+?)_\d+$/);
+      const name = match ? match[1] : cat._id;
+      return { code: cat._id, name };
+    });
 
     // Get unique section titles using aggregation
     const sections = await ChecklistItem.aggregate([
@@ -18,7 +33,7 @@ router.get('/', async (req, res) => {
 
     res.json({
       years: years.sort((a, b) => b - a),
-      areas: categories.sort(),
+      areas,
       subCategories: sections.map(s => s._id).filter(Boolean)
     });
   } catch (err) {

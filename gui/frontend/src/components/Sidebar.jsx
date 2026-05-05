@@ -82,7 +82,9 @@ function DashboardFilters() {
           onChange={(e) => { setSelectedArea(e.target.value); setPage(1); }}
         >
           <option value="">전체 대분류</option>
-          {filters.areas.map(a => <option key={a} value={a}>{a}</option>)}
+          {filters.areas.map(a => (
+            <option key={a.code} value={a.code}>{a.name}</option>
+          ))}
         </select>
       </div>
 
@@ -183,7 +185,9 @@ function CompareFilters() {
           onChange={(e) => setCompareArea(e.target.value)}
         >
           <option value="">전체 분야</option>
-          {filters.areas.map(a => <option key={a} value={a}>{a}</option>)}
+          {filters.areas.map(a => (
+            <option key={a.code} value={a.code}>{a.name}</option>
+          ))}
         </select>
       </div>
 
@@ -222,7 +226,9 @@ function TrackFilters() {
           onChange={(e) => setHistoryArea(e.target.value)}
         >
           <option value="">분야 선택...</option>
-          {filters.areas.map(a => <option key={a} value={a}>{a}</option>)}
+          {filters.areas.map(a => (
+            <option key={a.code} value={a.code}>{a.name}</option>
+          ))}
         </select>
       </div>
 
