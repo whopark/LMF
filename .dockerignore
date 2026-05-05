@@ -1,0 +1,13 @@
+# Ignore everything except backend
+*
+
+# Include backend files
+!gui/backend/
+
+# Exclude backend dev files
+gui/backend/node_modules
+gui/backend/.env
+gui/backend/.env.*
+!gui/backend/.env.example
+gui/backend/tests/
+gui/backend/coverage/
