@@ -135,7 +135,14 @@ function AppContent() {
           />
         ) : (
           <HistoryView
+            historySubMode={historySubMode}
             loading={loading}
+            changesData={changesData}
+            compareYear={compareYear}
+            compareArea={compareArea}
+            historyArea={historyArea}
+            selectedHistoryNumber={selectedHistoryNumber}
+            historyItems={historyItems}
             setSelectedItem={setSelectedItem}
           />
         )}
