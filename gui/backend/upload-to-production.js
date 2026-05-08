@@ -1,15 +1,29 @@
 #!/usr/bin/env node
 /**
  * Upload transformed data to production API.
+ *
+ * Required environment variables:
+ *   PRODUCTION_API_URL - Production API base URL
+ *   PRODUCTION_API_KEY - API key for authentication
  */
 
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 
-// Configuration
+// Configuration from environment variables
 const TRANSFORMED_FILE = path.join(__dirname, '../../pdf/transformed_data.json');
-const PRODUCTION_API = 'https://lmf2026may-zjuldogw.b4a.run';
-const API_KEY = 'af286e70f897366d138c9309b8b17f3c59478d6a63da7e08d0dbae915fcca7e4';
+const PRODUCTION_API = process.env.PRODUCTION_API_URL;
+const API_KEY = process.env.PRODUCTION_API_KEY;
+
+// Validate required environment variables
+if (!PRODUCTION_API || !API_KEY) {
+  console.error('ERROR: Required environment variables not set');
+  console.error('Please set the following in your .env file:');
+  console.error('  PRODUCTION_API_URL=https://your-api-url.com');
+  console.error('  PRODUCTION_API_KEY=your-api-key');
+  process.exit(1);
+}
 
 async function uploadToProduction() {
   console.log('='.repeat(60));
