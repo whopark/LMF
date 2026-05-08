@@ -3,6 +3,34 @@ const ChecklistItem = require('../models/ChecklistItem');
 
 const router = express.Router();
 
+// Helper function to flatten items using aggregation pipeline
+async function getFlattenedItems(year, area) {
+  const match = { year: parseInt(year) };
+  if (area) match.category = area;
+
+  const pipeline = [
+    { $match: match },
+    { $unwind: '$structured_sections' },
+    { $unwind: '$structured_sections.items' },
+    {
+      $project: {
+        _id: 1,
+        year: 1,
+        category: 1,
+        title: 1,
+        section_title: '$structured_sections.title',
+        item_code: '$structured_sections.items.item_code',
+        requirement: '$structured_sections.items.requirement',
+        raw_line: '$structured_sections.items.raw_line',
+        max_score: '$structured_sections.items.max_score',
+        item_type: '$structured_sections.items.type'
+      }
+    }
+  ];
+
+  return await ChecklistItem.aggregate(pipeline);
+}
+
 // Get year-over-year changes
 router.get('/:year', async (req, res) => {
   try {
@@ -10,23 +38,27 @@ router.get('/:year', async (req, res) => {
     const { area } = req.query;
     const prevYear = targetYear - 1;
 
-    const baseQuery = area ? { area } : {};
-
+    // Get flattened items for both years using aggregation
     const [targetItems, prevItems] = await Promise.all([
-      ChecklistItem.find({ ...baseQuery, 'metadata.year': targetYear }),
-      ChecklistItem.find({ ...baseQuery, 'metadata.year': prevYear })
+      getFlattenedItems(targetYear, area),
+      getFlattenedItems(prevYear, area)
     ]);
 
+    // Build map of previous year items by item_code
     const prevMap = new Map();
     prevItems.forEach(item => {
-      prevMap.set(item.about_item.item_number, item);
+      if (item.item_code) {
+        prevMap.set(item.item_code, item);
+      }
     });
 
     const changes = [];
 
+    // Find NEW and MODIFIED items
     for (const current of targetItems) {
-      const itemNum = current.about_item.item_number;
-      const prev = prevMap.get(itemNum);
+      if (!current.item_code) continue;
+
+      const prev = prevMap.get(current.item_code);
 
       if (!prev) {
         changes.push(buildNewItemChange(current, targetYear));
@@ -39,14 +71,15 @@ router.get('/:year', async (req, res) => {
       }
     }
 
-    // Find deleted items
-    const currentNums = new Set(targetItems.map(i => i.about_item.item_number));
+    // Find DELETED items
+    const currentCodes = new Set(targetItems.filter(i => i.item_code).map(i => i.item_code));
     for (const prev of prevItems) {
-      if (!currentNums.has(prev.about_item.item_number)) {
+      if (prev.item_code && !currentCodes.has(prev.item_code)) {
         changes.push(buildDeletedItemChange(prev, prevYear));
       }
     }
 
+    // Sort by item_code
     changes.sort((a, b) => a.item_number.localeCompare(b.item_number));
 
     res.json({
@@ -59,23 +92,24 @@ router.get('/:year', async (req, res) => {
       changes
     });
   } catch (err) {
+    console.error('Changes API error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
 function buildNewItemChange(current, targetYear) {
   return {
-    item_number: current.about_item.item_number,
-    area: current.area,
-    sub_category: current.sub_category,
+    item_number: current.item_code,
+    area: current.category,
+    sub_category: current.section_title,
     change_type: 'NEW',
     summary: '신규 문항 추가',
     current: {
       year: targetYear,
-      question: current.about_item.question,
-      description: current.about_item.description,
-      item_type: current.about_item.item_type,
-      score: current.about_item.score
+      question: current.requirement || '',
+      description: current.raw_line || '',
+      item_type: current.item_type || '',
+      score: current.max_score
     },
     previous: null
   };
@@ -83,27 +117,27 @@ function buildNewItemChange(current, targetYear) {
 
 function buildDeletedItemChange(prev, prevYear) {
   return {
-    item_number: prev.about_item.item_number,
-    area: prev.area,
-    sub_category: prev.sub_category,
+    item_number: prev.item_code,
+    area: prev.category,
+    sub_category: prev.section_title,
     change_type: 'DELETED',
     summary: '문항 삭제됨',
     current: null,
     previous: {
       year: prevYear,
-      question: prev.about_item.question,
-      description: prev.about_item.description,
-      item_type: prev.about_item.item_type,
-      score: prev.about_item.score
+      question: prev.requirement || '',
+      description: prev.raw_line || '',
+      item_type: prev.item_type || '',
+      score: prev.max_score
     }
   };
 }
 
 function detectChanges(current, prev, targetYear, prevYear) {
-  const questionChanged = current.about_item.question !== prev.about_item.question;
-  const descChanged = current.about_item.description !== prev.about_item.description;
-  const typeChanged = current.about_item.item_type !== prev.about_item.item_type;
-  const scoreChanged = current.about_item.score !== prev.about_item.score;
+  const questionChanged = (current.requirement || '') !== (prev.requirement || '');
+  const descChanged = (current.raw_line || '') !== (prev.raw_line || '');
+  const typeChanged = (current.item_type || '') !== (prev.item_type || '');
+  const scoreChanged = current.max_score !== prev.max_score;
 
   if (!questionChanged && !descChanged && !typeChanged && !scoreChanged) {
     return null;
@@ -112,28 +146,28 @@ function detectChanges(current, prev, targetYear, prevYear) {
   const changeParts = [];
   if (questionChanged) changeParts.push('질문 변경');
   if (descChanged) changeParts.push('설명 변경');
-  if (typeChanged) changeParts.push(`유형 변경 (${prev.about_item.item_type || '없음'} → ${current.about_item.item_type || '없음'})`);
-  if (scoreChanged) changeParts.push(`배점 변경 (${prev.about_item.score || 0} → ${current.about_item.score || 0})`);
+  if (typeChanged) changeParts.push(`유형 변경 (${prev.item_type || '없음'} → ${current.item_type || '없음'})`);
+  if (scoreChanged) changeParts.push(`배점 변경 (${prev.max_score || 0} → ${current.max_score || 0})`);
 
   return {
-    item_number: current.about_item.item_number,
-    area: current.area,
-    sub_category: current.sub_category,
+    item_number: current.item_code,
+    area: current.category,
+    sub_category: current.section_title,
     change_type: 'MODIFIED',
     summary: changeParts.join(', '),
     current: {
       year: targetYear,
-      question: current.about_item.question,
-      description: current.about_item.description,
-      item_type: current.about_item.item_type,
-      score: current.about_item.score
+      question: current.requirement || '',
+      description: current.raw_line || '',
+      item_type: current.item_type || '',
+      score: current.max_score
     },
     previous: {
       year: prevYear,
-      question: prev.about_item.question,
-      description: prev.about_item.description,
-      item_type: prev.about_item.item_type,
-      score: prev.about_item.score
+      question: prev.requirement || '',
+      description: prev.raw_line || '',
+      item_type: prev.item_type || '',
+      score: prev.max_score
     }
   };
 }
