@@ -35,6 +35,25 @@ function AppContent() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Handle browser back button for modal
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (selectedItem && !event.state?.modalOpen) {
+        setSelectedItem(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [selectedItem]);
+
+  // Push history state when modal opens
+  useEffect(() => {
+    if (selectedItem) {
+      window.history.pushState({ modalOpen: true }, '');
+    }
+  }, [selectedItem]);
+
   // Fetch Dashboard Items
   const fetchItems = useCallback(async () => {
     if (viewMode !== 'dashboard') return;
@@ -152,6 +171,7 @@ function AppContent() {
         selectedItem={selectedItem}
         setSelectedItem={setSelectedItem}
         setItems={setItems}
+        setHistoryItems={setHistoryItems}
       />
     </div>
   );

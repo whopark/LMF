@@ -43,7 +43,13 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
   };
 
   const handleClose = () => {
-    setSelectedItem(null);
+    // Go back in history instead of just closing
+    // This keeps the history stack clean
+    if (window.history.state?.modalOpen) {
+      window.history.back();
+    } else {
+      setSelectedItem(null);
+    }
     setIsEditing(false);
   };
 
