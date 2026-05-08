@@ -153,7 +153,7 @@ function ModalContent({ selectedItem, isEditing, editData, setEditData }) {
                     onChange={e => setEditData({ ...editData, description: e.target.value })}
                   />
                 ) : (
-                  <ul className="bullet-list">{formatDescription(display.description)}</ul>
+                  <div className="description-content">{formatDescription(display.description)}</div>
                 )}
               </div>
             </td>

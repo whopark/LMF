@@ -11,7 +11,7 @@ export function getTagClass(type) {
 }
 
 /**
- * Formats description text into list items
+ * Formats description text into paragraphs (general text without bullets)
  */
 export function formatDescription(desc) {
   if (!desc) return null;
@@ -26,7 +26,7 @@ export function formatDescription(desc) {
     }
   });
   if (current) processedLines.push(current.replace(/^[•\-\*]\s*/, ''));
-  return processedLines.map((line, idx) => <li key={idx}>{line}</li>);
+  return processedLines.map((line, idx) => <p key={idx} style={{ margin: '0.3rem 0' }}>{line}</p>);
 }
 
 /**

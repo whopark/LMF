@@ -262,9 +262,9 @@ function TrackView({ loading, historyArea, selectedHistoryNumber, historyItems, 
                     <span style={{ marginLeft: '1rem' }}>{display.question}</span>
                   </div>
                   <div className="history-card-body">
-                    <ul className="bullet-list">
+                    <div className="description-content">
                       {formatDescription(display.description)}
-                    </ul>
+                    </div>
                   </div>
                 </div>
               </div>

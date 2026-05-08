@@ -144,7 +144,19 @@ select.select-input option {
   cursor: pointer;
 }
 
-/* Bulleted description list */
+/* Description content (general text without bullets) */
+.description-content {
+  padding: 0;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.description-content p {
+  margin: 0.4rem 0;
+  text-indent: 0;
+}
+
+/* Legacy: Bulleted description list (deprecated) */
 .bullet-list {
   list-style: none;
   padding: 0;
