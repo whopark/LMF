@@ -8,13 +8,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Copy source code
 COPY . .
 
-# Expose port (Back4app uses PORT env variable)
-EXPOSE 3000
+# Expose port (Railway sets PORT env variable)
+EXPOSE 5000
 
 # Start the server
 CMD ["node", "server.js"]
