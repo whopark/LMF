@@ -1,8 +1,12 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const ChecklistItem = require('../models/ChecklistItem');
-// Note: requireApiKey available from '../middleware/auth' if write protection needed
+const { requireApiKey } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Whitelist of fields allowed for PATCH updates
+const ALLOWED_PATCH_FIELDS = ['about_item.score', 'status', 'tags', 'notes'];
 
 // Get items with filtering & search (flattened from nested structure)
 router.get('/', async (req, res) => {
@@ -154,6 +158,65 @@ router.get('/:code', async (req, res) => {
     }));
 
     res.json(history);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH item by document ObjectId (requires API key authentication)
+router.patch('/:id', requireApiKey, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid document ID format' });
+    }
+
+    // Filter body to only allowed fields
+    const updates = {};
+    let hasValidFields = false;
+
+    for (const field of ALLOWED_PATCH_FIELDS) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+        hasValidFields = true;
+      }
+    }
+
+    if (!hasValidFields) {
+      return res.status(400).json({
+        message: 'No valid fields to update',
+        allowed_fields: ALLOWED_PATCH_FIELDS
+      });
+    }
+
+    // Build MongoDB update object using $set
+    const updateDoc = { $set: updates };
+
+    const doc = await ChecklistItem.findByIdAndUpdate(
+      id,
+      updateDoc,
+      { new: true, runValidators: true }
+    );
+
+    if (!doc) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    // Return response in format matching GET endpoint
+    res.json({
+      _id: doc._id,
+      area: doc.category,
+      about_item: doc['about_item'] || { score: updates['about_item.score'] },
+      metadata: {
+        year: doc.year,
+        source: doc.title
+      },
+      status: doc.status,
+      tags: doc.tags,
+      notes: doc.notes
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

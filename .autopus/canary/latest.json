@@ -1,61 +1,70 @@
 {
-  "timestamp": "2026-05-04T20:51:45Z",
-  "commit": "a8e8225",
-  "context": "Post security fixes (SEC-001, SEC-002, SEC-003) - Full runtime verification",
+  "timestamp": "2026-05-09T06:25:00Z",
+  "commit": "5afd4f9+patch",
+  "context": "Full runtime verification with PATCH endpoint implemented",
   "build": {
     "status": "pass",
     "checks": [
-      {"id": "H1", "name": "frontend build", "status": "pass", "duration_ms": 3930, "output": "dist/ created, 391.17 kB JS"},
+      {"id": "H1", "name": "frontend build", "status": "pass", "duration_ms": 3680, "output": "dist/ created, 391.25 kB JS"},
       {"id": "H2", "name": "backend syntax", "status": "pass", "duration_ms": 100, "output": "syntax OK"},
       {"id": "H3", "name": "module load", "status": "pass", "duration_ms": 200, "output": "api.js, llm.js, ChecklistItem.js, auth.js loaded"}
     ]
   },
   "tests": {
     "status": "pass",
-    "total": 23,
-    "passed": 23,
+    "total": 32,
+    "passed": 32,
     "failed": 0,
     "checks": [
-      {"id": "H12", "name": "backend tests", "status": "pass", "count": 14, "duration_ms": 1840},
-      {"id": "H13", "name": "frontend tests", "status": "pass", "count": 9, "duration_ms": 2060}
+      {"id": "H12", "name": "backend tests", "status": "pass", "count": 23, "duration_ms": 3820},
+      {"id": "H13", "name": "frontend tests", "status": "pass", "count": 9, "duration_ms": 3480}
+    ]
+  },
+  "e2e": {
+    "status": "warn",
+    "total": 19,
+    "passed": 18,
+    "failed": 1,
+    "scenarios": [
+      {"id": "S1-S9", "status": "pass"},
+      {"id": "S10", "status": "fail", "note": "rate limit test - requires Anthropic API key"},
+      {"id": "S11-S19", "status": "pass"}
     ]
   },
   "endpoint": {
     "status": "pass",
     "checks": [
-      {"id": "H4", "name": "GET /api/filters", "status": "pass", "http_code": 200, "validation": "years array non-empty (7 years)"},
-      {"id": "H5", "name": "GET /api/items?limit=1", "status": "pass", "http_code": 200, "validation": "items returned"},
-      {"id": "H6", "name": "GET /api/changes/2024", "status": "pass", "http_code": 200, "validation": "targetYear == 2024, 277 changes"},
+      {"id": "H4", "name": "GET /api/filters", "status": "pass", "http_code": 200, "validation": "years array has 7 entries, areas populated"},
+      {"id": "H5", "name": "GET /api/items?limit=1", "status": "pass", "http_code": 200, "validation": "item returned with _id, about_item"},
+      {"id": "H6", "name": "GET /api/changes/2024", "status": "pass", "http_code": 200, "validation": "targetYear == 2024"},
       {"id": "H7", "name": "GET /", "status": "pass", "http_code": 200, "validation": "HTML contains 우수검사실"}
     ]
   },
   "auth": {
     "status": "pass",
     "checks": [
-      {"id": "H11a", "name": "PATCH without API key", "status": "pass", "http_code": 401, "response": "API key required"},
-      {"id": "H11b", "name": "PATCH with wrong API key", "status": "pass", "http_code": 403, "response": "Invalid API key"},
-      {"id": "H11c", "name": "PATCH with correct API key", "status": "pass", "http_code": 400, "response": "passed auth, business logic rejection"}
-    ]
-  },
-  "security_logging": {
-    "status": "pass",
-    "events_captured": [
-      {"event": "AUTH_FAILURE", "level": "WARN", "logged": true},
-      {"event": "AUTHZ_DENIED", "level": "WARN", "logged": true}
+      {"id": "H11a", "name": "PATCH without API key", "status": "pass", "http_code": 401, "validation": "returns 401 Unauthorized"},
+      {"id": "H11b", "name": "PATCH with invalid API key", "status": "pass", "http_code": 403, "validation": "returns 403 Forbidden"},
+      {"id": "H11c", "name": "PATCH with valid API key", "status": "pass", "http_code": 200, "validation": "returns 200 OK with updated document"}
     ]
   },
   "browser": {
-    "status": "skip",
-    "reason": "Browser automation not available in current environment"
+    "status": "warn",
+    "checks": [
+      {"id": "H8", "name": "home page load", "status": "warn", "validation": "page title correct, sidebar visible, but 6 console errors"},
+      {"id": "H9", "name": "history compare view", "status": "skip", "reason": "blocked by H8 console errors"}
+    ],
+    "console_errors": 6,
+    "error_summary": "CORS policy blocks requests to https://lmf2026may-zjuldogw.b4a.run - production build configured for remote API, not localhost"
   },
   "rate_limit": {
     "status": "skip",
-    "reason": "H10 requires Anthropic API key for full test"
+    "reason": "H10 requires Anthropic API key"
   },
-  "security_fixes_verified": {
-    "SEC-001": {"name": "CORS whitelist", "file": "gui/backend/app.js", "verified": true},
-    "SEC-002": {"name": "timing-safe API key", "file": "gui/backend/middleware/auth.js", "verified": true, "runtime_test": "401/403 responses correct"},
-    "SEC-003": {"name": "security event logging", "verified": true, "runtime_test": "AUTH_FAILURE and AUTHZ_DENIED events logged"}
-  },
-  "verdict": "pass"
+  "verdict": "warn",
+  "notes": "Build, tests, API endpoints, and auth all pass. Browser console errors due to production build API URL mismatch (remote vs localhost). For local testing, use 'npm run dev' instead of serving dist.",
+  "recommendations": [
+    "Use Vite dev server (npm run dev) for local frontend testing with API proxy",
+    "Configure VITE_API_URL environment variable for flexible API base URL"
+  ]
 }
