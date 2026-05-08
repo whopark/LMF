@@ -34,7 +34,7 @@ if (process.env.VERCEL) {
     try {
       await connectDB();
       next();
-    } catch (err) {
+    } catch (_err) {
       res.status(500).json({ error: 'Database connection failed' });
     }
   });
@@ -50,7 +50,7 @@ if (process.env.VERCEL) {
         console.log(`Server running on port ${PORT}`);
       });
     })
-    .catch(err => {
+    .catch(_err => {
       process.exit(1);
     });
 }

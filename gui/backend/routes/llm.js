@@ -53,15 +53,12 @@ router.post('/reason', reasonLimiter, async (req, res) => {
 });
 
 function buildPrompt(prev, curr, changeType, summary) {
-  let context = '';
-
-  if (changeType === 'NEW') {
-    context = `신규 문항이 추가되었습니다.\n현재: ${JSON.stringify(curr)}`;
-  } else if (changeType === 'DELETED') {
-    context = `기존 문항이 삭제되었습니다.\n이전: ${JSON.stringify(prev)}`;
-  } else {
-    context = `이전 버전:\n${JSON.stringify(prev)}\n\n현재 버전:\n${JSON.stringify(curr)}`;
-  }
+  // Build context based on change type
+  const context = changeType === 'NEW'
+    ? `신규 문항이 추가되었습니다.\n현재: ${JSON.stringify(curr)}`
+    : changeType === 'DELETED'
+      ? `기존 문항이 삭제되었습니다.\n이전: ${JSON.stringify(prev)}`
+      : `이전 버전:\n${JSON.stringify(prev)}\n\n현재 버전:\n${JSON.stringify(curr)}`;
 
   return `당신은 우수검사실 신임인증 심사점검표의 변경사항을 분석하는 전문가입니다.
 

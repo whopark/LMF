@@ -2,6 +2,9 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import { beforeAll, afterAll, afterEach } from 'vitest';
 
+// Set test environment variables
+process.env.API_KEY = process.env.API_KEY || 'test-api-key';
+
 let mongoServer;
 
 beforeAll(async () => {

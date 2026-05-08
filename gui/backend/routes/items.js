@@ -1,6 +1,6 @@
 const express = require('express');
 const ChecklistItem = require('../models/ChecklistItem');
-const { requireApiKey } = require('../middleware/auth');
+// Note: requireApiKey available from '../middleware/auth' if write protection needed
 
 const router = express.Router();
 
@@ -133,7 +133,7 @@ router.get('/:code', async (req, res) => {
     const results = await ChecklistItem.aggregate(pipeline);
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "Item not found" });
+      return res.status(404).json({ message: 'Item not found' });
     }
 
     const history = results.map(doc => ({

@@ -156,7 +156,7 @@ async function main() {
   const categories = [...new Set(documents.map(d => d.category))].sort();
   const totalItems = documents.reduce((sum, d) => sum + d.total_items, 0);
 
-  console.log(`\n     Summary:`);
+  console.log('\n     Summary:');
   console.log(`       - Years: ${years.join(', ')}`);
   console.log(`       - Categories: ${categories.join(', ')}`);
   console.log(`       - Documents: ${documents.length}`);
@@ -191,7 +191,7 @@ async function main() {
     // Verify
     const count = await ChecklistDoc.countDocuments();
     const dbYears = await ChecklistDoc.distinct('year');
-    console.log(`\n     Verification:`);
+    console.log('\n     Verification:');
     console.log(`       - Document count: ${count}`);
     console.log(`       - Years in DB: ${dbYears.sort().join(', ')}`);
 
