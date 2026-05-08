@@ -65,7 +65,7 @@
 ## Cross-References
 
 - 정책 규칙: `.claude/rules/autopus/*.md`
-- 진행 SPEC: `.autopus/specs/SPEC-CLEANUP-001/`
+- 완료 SPEC: `.autopus/specs/SPEC-CLEANUP-001/` (초기 위생 정리)
 - 제품 컨텍스트: `.autopus/project/product.md`
 - 디렉토리 구조: `.autopus/project/structure.md`
 - 기술 스택: `.autopus/project/tech.md`

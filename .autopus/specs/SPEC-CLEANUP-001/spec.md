@@ -1,6 +1,6 @@
 # SPEC-CLEANUP-001 · 초기 위생 정리
 
-- Status: implemented
+- Status: completed
 - Priority: Must
 - Owner: 메인 세션
 - Created: 2026-05-03

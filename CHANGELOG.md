@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Completed SPECs
+- **SPEC-CLEANUP-001**: 초기 위생 정리 완료
+  - 빈 스트레이 디렉토리 및 Windows 예약 이름 파일 제거 (REQ-1)
+  - App.css 분할: tokens/layout/components/views 구조 (REQ-2, REQ-3)
+  - dotenv 환경변수 설정: MONGO_URI, ANTHROPIC_API_KEY, LLM_* (REQ-4)
+  - `/api/llm/reason` 분당 20회 rate limit 적용 (REQ-5)
+  - Express JSON body parser 32KB 제한 (REQ-6)
+  - import-data.js 스키마 재사용 리팩토링 (REQ-7)
+  - SPEC 문서화 4개 파일 구성 (REQ-9)
+
 ### Security
 - **SEC-001**: CORS wildcard를 whitelist 방식으로 변경 (`CORS_ORIGINS` 환경변수)
 - **SEC-002**: API key 비교를 timing-safe 방식으로 변경 (`crypto.timingSafeEqual`)
