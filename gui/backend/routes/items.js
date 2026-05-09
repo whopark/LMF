@@ -6,7 +6,15 @@ const { requireApiKey } = require('../middleware/auth');
 const router = express.Router();
 
 // Whitelist of fields allowed for PATCH updates
-const ALLOWED_PATCH_FIELDS = ['about_item.score', 'status', 'tags', 'notes'];
+const ALLOWED_PATCH_FIELDS = [
+  'about_item.score',
+  'about_item.question',
+  'about_item.description',
+  'about_item.item_type',
+  'status',
+  'tags',
+  'notes'
+];
 
 // Get items with filtering & search (flattened from nested structure)
 router.get('/', async (req, res) => {

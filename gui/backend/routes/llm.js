@@ -5,7 +5,9 @@ const { logRateLimitExceeded } = require('../utils/securityLogger');
 
 const router = express.Router();
 
-const client = new Anthropic();
+// Check if API key is configured
+const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+const client = hasApiKey ? new Anthropic() : null;
 
 const LLM_MODEL = process.env.LLM_MODEL || 'claude-haiku-4-5';
 const LLM_MAX_TOKENS = parseInt(process.env.LLM_MAX_TOKENS, 10) || 300;
@@ -26,6 +28,14 @@ const reasonLimiter = rateLimit({
 // Generate modification reason using Claude
 router.post('/reason', reasonLimiter, async (req, res) => {
   try {
+    // Check if Anthropic API key is configured
+    if (!client) {
+      return res.status(503).json({
+        error: 'LLM 기능을 사용하려면 ANTHROPIC_API_KEY 환경변수를 설정하세요.',
+        code: 'API_KEY_NOT_CONFIGURED'
+      });
+    }
+
     const { previous, current, changeType, summary } = req.body;
 
     if (!previous && !current) {
