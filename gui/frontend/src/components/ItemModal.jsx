@@ -27,12 +27,14 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
 
   const handleSave = async () => {
     try {
+      const apiKey = import.meta.env.VITE_API_KEY;
+      const headers = apiKey ? { 'x-api-key': apiKey } : {};
       const res = await axios.patch(`${API_BASE}/items/${selectedItem._id}`, {
         'about_item.question': editData.question,
         'about_item.description': editData.description,
         'about_item.score': editData.score,
         'about_item.item_type': editData.item_type
-      });
+      }, { headers });
       setSelectedItem(res.data);
       setItems(prev => prev.map(item => item._id === res.data._id ? res.data : item));
       setHistoryItems(prev => prev.map(item => item._id === res.data._id ? res.data : item));

@@ -135,7 +135,14 @@ function SideBySideItem({ change, idx }) {
       });
       setReason(res.data.reason);
     } catch (err) {
-      setReason('수정사유 생성에 실패했습니다.');
+      // Handle specific error cases
+      if (err.response?.data?.code === 'API_KEY_NOT_CONFIGURED') {
+        setReason('⚠️ ANTHROPIC_API_KEY가 설정되지 않았습니다. 백엔드 .env 파일에 API 키를 추가하세요.');
+      } else if (err.response?.status === 429) {
+        setReason('⏱️ 요청이 너무 많습니다. 잠시 후 다시 시도하세요.');
+      } else {
+        setReason('수정사유 생성에 실패했습니다.');
+      }
     } finally {
       setReasonLoading(false);
     }
