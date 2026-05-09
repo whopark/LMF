@@ -9,9 +9,11 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
   const [editData, setEditData] = useState(null);
 
   const handleEdit = () => {
+    // Use getDisplayData to properly split merged question/description (2020 data)
+    const display = getDisplayData(selectedItem);
     setEditData({
-      question: selectedItem.about_item.question,
-      description: selectedItem.about_item.description,
+      question: display.question,
+      description: display.description,
       score: selectedItem.about_item.score,
       item_type: selectedItem.about_item.item_type
     });
