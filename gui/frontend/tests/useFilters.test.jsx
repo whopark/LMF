@@ -6,6 +6,15 @@ import { useFilters } from '../src/hooks/useFilters';
 // Mock axios
 vi.mock('axios');
 
+// Mock API_BASE to ensure consistent URL in tests
+vi.mock('../src/utils/helpers.jsx', async (importOriginal) => {
+  const original = await importOriginal();
+  return {
+    ...original,
+    API_BASE: '/api',
+  };
+});
+
 describe('useFilters', () => {
   beforeEach(() => {
     vi.clearAllMocks();
