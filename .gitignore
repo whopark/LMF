@@ -38,6 +38,12 @@ mongodb_data/
 
 # Temp files
 nul
+temp*.json
+*temp_item.json
+
+# gh-pages deployment (generated)
+gui/package.json
+gui/package-lock.json
 
 # PDF source documents — copyright concerns (한국 임상병리학회 점검표).
 # Stored locally for reference but excluded from public/private git history.
