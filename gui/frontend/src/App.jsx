@@ -19,6 +19,10 @@ function AppContent() {
     searchTerm,
     page,
     setTotalCount,
+    totalPages,
+    setTotalPages,
+    classification,
+    revisedOnly,
     historyArea,
     setItemNumbers,
     selectedHistoryNumber,
@@ -33,7 +37,6 @@ function AppContent() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [totalPages, setTotalPages] = useState(1);
 
   // Handle browser back button for modal
   useEffect(() => {
@@ -65,7 +68,9 @@ function AppContent() {
         year: selectedYear || undefined,
         area: selectedArea || undefined,
         sub_category: selectedSubCat || undefined,
-        search: searchTerm || undefined
+        search: searchTerm || undefined,
+        classification: classification || undefined,
+        revised_only: revisedOnly ? 'true' : undefined,
       };
       const res = await axios.get(`${API_BASE}/items`, { params });
       setItems(res.data.items);
@@ -76,7 +81,7 @@ function AppContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, viewMode, setTotalCount]);
+  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, classification, revisedOnly, viewMode, setTotalCount, setTotalPages]);
 
   useEffect(() => {
     fetchItems();
@@ -149,7 +154,6 @@ function AppContent() {
           <DashboardView
             items={items}
             loading={loading}
-            totalPages={totalPages}
             setSelectedItem={setSelectedItem}
           />
         ) : (

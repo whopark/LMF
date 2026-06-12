@@ -17,6 +17,14 @@ export function FilterProvider({ children }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Extended dashboard filters (Phase 3)
+  const [classification, setClassification] = useState('');
+  const [revisedOnly, setRevisedOnly] = useState(false);
+
+  // Stage 1 user identity (Phase 3) — no auth, just records who is editing
+  const [selectedUser, setSelectedUser] = useState('');
 
   // History - Item Tracking
   const [historyArea, setHistoryArea] = useState('');
@@ -40,7 +48,6 @@ export function FilterProvider({ children }) {
       setSelectedYear(sortedYears[0].toString());
     }
     if (filters.areas.length > 0) {
-      // areas is now an array of {code, name} objects
       setSelectedArea(filters.areas[0].code);
     }
   }, [filters]);
@@ -50,6 +57,8 @@ export function FilterProvider({ children }) {
     setSelectedYear('');
     setSelectedSubCat('');
     setSearchTerm('');
+    setClassification('');
+    setRevisedOnly(false);
     setPage(1);
     setHistoryArea('');
     setSelectedHistoryNumber('');
@@ -69,6 +78,12 @@ export function FilterProvider({ children }) {
     searchTerm, setSearchTerm,
     page, setPage,
     totalCount, setTotalCount,
+    totalPages, setTotalPages,
+    // Extended filters
+    classification, setClassification,
+    revisedOnly, setRevisedOnly,
+    // User identity
+    selectedUser, setSelectedUser,
     // History - Tracking
     historyArea, setHistoryArea,
     itemNumbers, setItemNumbers,

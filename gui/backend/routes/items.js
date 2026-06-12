@@ -39,7 +39,7 @@ function toResponse(item) {
 // GET /api/items — paginated list with filtering & search
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 50, area, sub_category, year, search, classification } = req.query;
+    const { page = 1, limit = 50, area, sub_category, year, search, classification, revised_only } = req.query;
 
     const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 200);
     const safePage = Math.max(parseInt(page) || 1, 1);
@@ -49,6 +49,7 @@ router.get('/', async (req, res) => {
     if (year) query.year = parseInt(year);
     if (sub_category) query.sub_category = sub_category;
     if (classification) query.classification = classification;
+    if (revised_only === 'true') query['revision.revised'] = true;
 
     if (search) {
       const escaped = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
