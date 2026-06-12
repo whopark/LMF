@@ -2,6 +2,7 @@ const express = require('express');
 const Item = require('../models/Item');
 const Revision = require('../models/Revision');
 const { requireApiKey } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/roles');
 
 const router = express.Router();
 
@@ -44,7 +45,7 @@ router.get('/:key', async (req, res) => {
 
 // PATCH /api/common/:key — bulk update shared fields across all matching areas
 // Body: { question?, description?, score?, area_codes?, edit_types?, reason? }
-router.patch('/:key', requireApiKey, async (req, res) => {
+router.patch('/:key', requireAuth('editor'), async (req, res) => {
   try {
     const { key } = req.params;
     const { area_codes, edit_types = [], reason = '', ...rest } = req.body;
@@ -71,8 +72,7 @@ router.patch('/:key', requireApiKey, async (req, res) => {
       return res.status(404).json({ message: 'No items found for this common_key' });
     }
 
-    const rawUser = req.headers['x-user'] || '';
-    const user = rawUser ? decodeURIComponent(rawUser) : 'unknown';
+    const user = req.user?.name || 'unknown';
     const result = { updated: [], skipped_locked: [] };
 
     for (const item of targets) {

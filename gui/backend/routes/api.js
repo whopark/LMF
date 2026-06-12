@@ -8,6 +8,8 @@ const revisionsRouter = require('./revisions');
 const commonRouter = require('./common');
 const worklistsRouter = require('./worklists');
 const exportRouter = require('./export');
+const authRouter = require('./auth');
+const auditRouter = require('./audit');
 
 const router = express.Router();
 
@@ -20,5 +22,7 @@ router.use('/revisions', revisionsRouter);
 router.use('/common', commonRouter);
 router.use('/worklists', worklistsRouter);
 router.use('/export', exportRouter);
+router.use('/auth', authRouter);
+router.use('/audit', auditRouter);
 
 module.exports = router;

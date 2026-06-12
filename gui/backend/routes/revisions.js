@@ -4,6 +4,7 @@ const Item = require('../models/Item');
 const Revision = require('../models/Revision');
 const { EditTypeCode, DEFAULT_CODES } = require('../models/EditTypeCode');
 const { requireApiKey } = require('../middleware/auth');
+const { requireAuth, hasRole } = require('../middleware/roles');
 const { isValidTransition, getStatusUpdates, VALID_TRANSITIONS } = require('../utils/revisionState');
 
 const router = express.Router();
@@ -50,8 +51,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/revisions/transition/:itemId — workflow state transition
-router.post('/transition/:itemId', requireApiKey, async (req, res) => {
+// POST /api/revisions/transition/:itemId — workflow state transition (editor+)
+router.post('/transition/:itemId', requireAuth('editor'), async (req, res) => {
   try {
     const { itemId } = req.params;
     const { to } = req.body;
@@ -71,6 +72,13 @@ router.post('/transition/:itemId', requireApiKey, async (req, res) => {
     if (item.revision?.locked) {
       return res.status(403).json({
         message: 'Item is locked (final). Only admin unlock allowed.',
+      });
+    }
+
+    // review→final requires approver role
+    if (to === 'final' && !hasRole(req.user?.role, 'approver')) {
+      return res.status(403).json({
+        message: 'Transition to final requires approver role or above',
       });
     }
 

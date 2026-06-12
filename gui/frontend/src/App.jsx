@@ -7,8 +7,10 @@ import DashboardView from './components/DashboardView';
 import HistoryView from './components/HistoryView';
 import RevisionListView from './components/RevisionListView';
 import ItemModal from './components/ItemModal';
+import LoginPage from './components/LoginPage';
 import { API_BASE } from './utils/helpers.jsx';
 import { FilterProvider, useFilterContext } from './contexts/FilterContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 function AppContent() {
   const {
@@ -193,11 +195,22 @@ function AppContent() {
   );
 }
 
-function App() {
+function AuthGate() {
+  const { user, loading } = useAuth();
+  if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#94a3b8' }}>로딩 중...</div>;
+  if (!user) return <LoginPage />;
   return (
     <FilterProvider>
       <AppContent />
     </FilterProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 }
 

@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { HelpCircle, LayoutTemplate, History, Calendar, Map, Tag, ChevronRight, GitCompare, User, Filter, ClipboardList } from 'lucide-react';
 import axios from 'axios';
 import { useFilterContext } from '../contexts/FilterContext';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { API_BASE } from '../utils/helpers.jsx';
 
 function Sidebar() {
   const { viewMode, setViewMode, totalCount, resetFilters, selectedItemObjects } = useFilterContext();
+  const { user, logout } = useAuth();
 
   return (
     <aside className="sidebar">
@@ -14,6 +16,12 @@ function Sidebar() {
         <span>LMF Accreditation</span>
       </div>
 
+      {user && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#64748b' }}>
+          <span>👤 {user.name} <span style={{ color: '#38bdf8' }}>({user.role})</span></span>
+          <button onClick={logout} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem' }}>로그아웃</button>
+        </div>
+      )}
       <UserSelector />
 
       <div className="mode-toggle" style={{ marginBottom: '2rem' }}>

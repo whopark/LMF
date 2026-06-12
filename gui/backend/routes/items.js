@@ -2,7 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Item = require('../models/Item');
 const Revision = require('../models/Revision');
+const AuditLog = require('../models/AuditLog');
 const { requireApiKey } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/roles');
 
 const router = express.Router();
 
@@ -129,9 +131,9 @@ router.get('/:code', async (req, res) => {
   }
 });
 
-// PATCH /api/items/:id — update item fields (requires API key)
+// PATCH /api/items/:id — update item fields (editor role required)
 // Optional body fields: edit_types (array), reason (string), x-user header
-router.patch('/:id', requireApiKey, async (req, res) => {
+router.patch('/:id', requireAuth('editor'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -168,8 +170,8 @@ router.patch('/:id', requireApiKey, async (req, res) => {
       updates['revision.status'] = 'draft';
     }
 
-    const rawUser = req.headers['x-user'] || '';
-    const user = rawUser ? decodeURIComponent(rawUser) : 'unknown';
+    // req.user.name is set by requireAuth (JWT name OR x-user header for API key auth)
+    const user = req.user?.name || 'unknown';
     updates['last_modified'] = { user, at: new Date() };
 
     const updated = await Item.findByIdAndUpdate(
@@ -188,6 +190,16 @@ router.patch('/:id', requireApiKey, async (req, res) => {
       question: updated.question, description: updated.description,
       score: updated.score, classification: updated.classification, na_available: updated.na_available,
     };
+    AuditLog.create({
+      user,
+      role: req.user?.role || 'unknown',
+      action: 'patch_item',
+      resource_type: 'item',
+      resource_id: String(id),
+      details: { item_number: existing.item_number, score_changed: scoreChanged },
+      ip: req.ip,
+    }).catch(() => {});
+
     Revision.create({
       item_number: existing.item_number,
       area_code: existing.area_code,
