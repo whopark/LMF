@@ -1,15 +1,17 @@
 const express = require('express');
 const Worklist = require('../models/Worklist');
+const { requireAuth } = require('../middleware/roles');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
 
+// Use JWT-authenticated user name; x-user header no longer accepted for writes
 function getUser(req) {
-  const raw = req.headers['x-user'] || '';
-  return raw ? decodeURIComponent(raw) : 'unknown';
+  return req.user?.name || 'unknown';
 }
 
-// GET /api/worklists — current user's worklist (from x-user header)
-router.get('/', async (req, res) => {
+// GET /api/worklists — current user's worklist (viewer+)
+router.get('/', requireAuth('viewer'), async (req, res) => {
   try {
     const user = getUser(req);
     const year = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
@@ -22,12 +24,12 @@ router.get('/', async (req, res) => {
       updated_at: worklist?.updated_at || null,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'GET /worklists');
   }
 });
 
-// PUT /api/worklists — save (upsert) current user's worklist
-router.put('/', async (req, res) => {
+// PUT /api/worklists — save worklist (editor+, must be own data)
+router.put('/', requireAuth('editor'), async (req, res) => {
   try {
     const user = getUser(req);
     const { item_numbers = [], year = new Date().getFullYear() } = req.body;
@@ -44,12 +46,12 @@ router.put('/', async (req, res) => {
 
     res.json({ user, year: worklist.year, item_numbers: worklist.item_numbers });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'PUT /worklists');
   }
 });
 
-// DELETE /api/worklists — clear current user's worklist
-router.delete('/', async (req, res) => {
+// DELETE /api/worklists — clear own worklist (editor+)
+router.delete('/', requireAuth('editor'), async (req, res) => {
   try {
     const user = getUser(req);
     const year = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
@@ -60,7 +62,7 @@ router.delete('/', async (req, res) => {
     );
     res.json({ user, year, item_numbers: [] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'DELETE /worklists');
   }
 });
 

@@ -1,3 +1,4 @@
+const { serverError } = require('../utils/httpError');
 const express = require('express');
 const Item = require('../models/Item');
 
@@ -53,7 +54,7 @@ router.get('/:year', async (req, res) => {
     });
   } catch (err) {
     console.error('Changes API error:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'changes.js');
   }
 });
 

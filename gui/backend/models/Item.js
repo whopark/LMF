@@ -42,11 +42,11 @@ const itemSchema = new mongoose.Schema({
   source: sourceSchema,
 });
 
-// Compute common_key from item_number (format "NN.NNN.NNN" → last 7 chars "NNN.NNN")
+// Compute common_key from standard item_number format "NN.NNN.NNN" → "NNN.NNN".
+// Non-standard formats (e.g. non-numeric segments) leave common_key unchanged.
 itemSchema.pre('save', function (next) {
-  if (this.item_number && this.item_number.length >= 7) {
-    this.common_key = this.item_number.slice(-7);
-  }
+  const m = (this.item_number || '').match(/^\d{2}\.(\d{3}\.\d{3})$/);
+  if (m) this.common_key = m[1];
   next();
 });
 

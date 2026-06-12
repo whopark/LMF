@@ -39,6 +39,10 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
+// C2: Sanitize req.body / req.query / req.params to block NoSQL operator injection.
+// allowDots:true preserves legitimate keys like 'about_item.question' in PATCH bodies.
+const mongoSanitize = require('express-mongo-sanitize');
+app.use(mongoSanitize({ allowDots: true }));
 
 // Serve static files from the React app (only if frontend exists)
 if (hasFrontend) {

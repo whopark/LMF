@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import app from '../app.js';
 import Item from '../models/Item.js';
+
+const viewerToken = jwt.sign(
+  { name: 'test-viewer', role: 'viewer' },
+  process.env.JWT_SECRET || 'dev-secret',
+  { expiresIn: '1h' }
+);
 
 const baseItem = {
   item_number: '01.010.001',
@@ -121,8 +128,9 @@ describe('GET /api/items — combined filters', () => {
 });
 
 describe('GET /api/users', () => {
-  it('returns user list', async () => {
-    const res = await request(app).get('/api/users');
+  it('returns user list with viewer auth', async () => {
+    const res = await request(app).get('/api/users')
+      .set('Authorization', `Bearer ${viewerToken}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThan(0);

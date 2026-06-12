@@ -78,13 +78,15 @@ function Sidebar() {
 
 function UserSelector() {
   const { selectedUser, setSelectedUser } = useFilterContext();
+  const { authHeader } = useAuth();
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get(`${API_BASE}/users`)
+    // C4: GET /api/users now requires viewer auth — send JWT header
+    axios.get(`${API_BASE}/users`, { headers: authHeader() })
       .then(res => setUsers(res.data))
       .catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="filter-group" style={{ marginBottom: '1rem' }}>

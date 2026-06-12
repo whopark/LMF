@@ -1,28 +1,29 @@
 const express = require('express');
 const Item = require('../models/Item');
 const Revision = require('../models/Revision');
-const { requireApiKey } = require('../middleware/auth');
+const { requireAuth } = require('../middleware/roles');
+const { serverError } = require('../utils/httpError');
 const { buildItemsWorkbook, buildRevisionsWorkbook } = require('../utils/exportExcel');
 const { buildRevisionsDocx } = require('../utils/exportDocx');
 
 const router = express.Router();
 
-// All export endpoints require API key
-router.use(requireApiKey);
+// All export endpoints require editor role (or higher / API key fallback)
+router.use(requireAuth('editor'));
 
 function buildItemQuery(query) {
   const q = {};
-  if (query.area) q.area_code = query.area;
+  if (query.area) q.area_code = String(query.area);
   if (query.year) q.year = parseInt(query.year);
-  if (query.sub_category) q.sub_category = query.sub_category;
-  if (query.classification) q.classification = query.classification;
+  if (query.sub_category) q.sub_category = String(query.sub_category);
+  if (query.classification) q.classification = String(query.classification);
   if (query.revised_only === 'true') q['revision.revised'] = true;
   return q;
 }
 
 function buildRevisionQuery(query) {
   const q = {};
-  if (query.area) q.area_code = query.area;
+  if (query.area) q.area_code = String(query.area);
   if (query.year) q.year = parseInt(query.year);
   if (query.score_changed === 'true') q.score_changed = true;
   return q;
@@ -43,8 +44,7 @@ router.get('/items.xlsx', async (req, res) => {
     await wb.xlsx.write(res);
     res.end();
   } catch (err) {
-    console.error('[export/items.xlsx]', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'GET /export/items.xlsx');
   }
 });
 
@@ -63,8 +63,7 @@ router.get('/revisions.xlsx', async (req, res) => {
     await wb.xlsx.write(res);
     res.end();
   } catch (err) {
-    console.error('[export/revisions.xlsx]', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'GET /export/revisions.xlsx');
   }
 });
 
@@ -85,8 +84,7 @@ router.get('/revisions.docx', async (req, res) => {
     res.setHeader('Content-Length', buf.length);
     res.end(buf);
   } catch (err) {
-    console.error('[export/revisions.docx]', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'GET /export/revisions.docx');
   }
 });
 

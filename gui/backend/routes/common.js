@@ -1,3 +1,4 @@
+const { serverError } = require('../utils/httpError');
 const express = require('express');
 const Item = require('../models/Item');
 const Revision = require('../models/Revision');
@@ -39,7 +40,7 @@ router.get('/:key', async (req, res) => {
     }
     res.json({ common_key: req.params.key, items: items.map(toCommonResponse) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'common.js');
   }
 });
 
@@ -115,7 +116,7 @@ router.patch('/:key', requireAuth('editor'), async (req, res) => {
 
     res.json({ common_key: key, ...result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'common.js');
   }
 });
 

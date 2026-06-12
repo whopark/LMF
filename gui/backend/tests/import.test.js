@@ -24,7 +24,8 @@ describe('GET /api/import/status', () => {
   });
 
   it('returns empty status when no items exist', async () => {
-    const res = await request(app).get('/api/import/status');
+    const res = await request(app).get('/api/import/status')
+      .set('X-API-Key', VALID_API_KEY);
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('totalDocuments');
@@ -44,7 +45,8 @@ describe('GET /api/import/status', () => {
       year: 2023,
     });
 
-    const res = await request(app).get('/api/import/status');
+    const res = await request(app).get('/api/import/status')
+      .set('X-API-Key', VALID_API_KEY);
 
     expect(res.status).toBe(200);
     expect(res.body.totalDocuments).toBe(2);
@@ -61,13 +63,12 @@ describe('POST /api/import/bulk', () => {
     await Item.deleteMany({});
   });
 
-  it('rejects request without API key', async () => {
+  it('rejects request without credentials', async () => {
     const res = await request(app)
       .post('/api/import/bulk')
       .send({ documents: [sampleFlatItem] });
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toMatch(/Invalid or missing API key/i);
   });
 
   it('rejects request with invalid API key', async () => {
@@ -77,7 +78,6 @@ describe('POST /api/import/bulk', () => {
       .send({ documents: [sampleFlatItem] });
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toMatch(/Invalid or missing API key/i);
   });
 
   it('rejects request without documents array', async () => {

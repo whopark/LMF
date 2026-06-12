@@ -1,4 +1,9 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
+if (!process.env.JWT_SECRET) {
+  console.warn('[roles] WARNING: JWT_SECRET env var not set — using dev-secret, UNSAFE for production!');
+}
 
 // Role hierarchy — higher index = more permissions
 const ROLE_HIERARCHY = { viewer: 0, editor: 1, approver: 2, admin: 3 };
@@ -42,7 +47,7 @@ function requireAuth(minRole = 'viewer') {
     // x-user header (URL-encoded) provides human identity when API key is used
     const apiKey = req.headers['x-api-key'] || req.query.apiKey;
     const validKey = process.env.API_KEY;
-    if (apiKey && validKey && apiKey === validKey) {
+    if (apiKey && validKey && timingSafeEqual(apiKey, validKey)) {
       const rawXUser = req.headers['x-user'] || '';
       const xUserName = rawXUser ? decodeURIComponent(rawXUser) : 'api-key-user';
       req.user = { name: xUserName, role: 'admin' };
@@ -51,6 +56,16 @@ function requireAuth(minRole = 'viewer') {
 
     return res.status(401).json({ message: 'Authentication required' });
   };
+}
+
+function timingSafeEqual(a, b) {
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) {
+    crypto.timingSafeEqual(bufA, bufA); // dummy compare to maintain timing
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
 }
 
 module.exports = { requireAuth, hasRole, ROLE_HIERARCHY };

@@ -153,10 +153,18 @@ class TestCleanText:
     def test_strips_leading_trailing_whitespace(self):
         assert clean_text("  hello  ") == "hello"
 
-    def test_normalizes_bullet_character(self):
-        # Source uses • (U+2022), spec uses ∙ (U+22C5) — normalize to spec character
+    def test_normalizes_bullet_u2022_to_u2219(self):
+        # H1 regression: • (U+2022) must become ∙ (U+2219 BULLET OPERATOR), not ⋅ (U+22C5)
         result = clean_text("• 첫 번째 항목")
-        assert "∙" in result or "•" not in result
+        assert "∙" in result          # must have U+2219
+        assert "•" not in result      # must not have U+2022
+        assert "⋅" not in result  # must not have wrong U+22C5
+
+    def test_normalizes_all_bullet_variants(self):
+        # All three variants should all become ∙ U+2219
+        for ch in ("•", "⋅", "·"):
+            result = clean_text(f"{ch} 항목")
+            assert "∙" in result, f"Expected ∙ after normalizing {repr(ch)}"
 
     def test_none_returns_empty(self):
         assert clean_text(None) == ""
@@ -164,3 +172,22 @@ class TestCleanText:
     def test_preserves_content(self):
         text = "검사실 조직도가 있는가?"
         assert clean_text(text) == text
+
+
+class TestComputeCommonKey:
+    def test_standard_format(self):
+        # H2 regression: regex-based, not length-based slicing
+        from etl_v9 import compute_common_key
+        assert compute_common_key("01.010.090") == "010.090"
+        assert compute_common_key("90.010.090") == "010.090"
+
+    def test_nonstandard_returns_empty(self):
+        from etl_v9 import compute_common_key
+        # e.g. manual correction items with non-numeric segments
+        assert compute_common_key("08.제공.001") == ""
+        assert compute_common_key("") == ""
+        assert compute_common_key(None) == ""
+
+    def test_common_key_consistent_across_areas(self):
+        from etl_v9 import compute_common_key
+        assert compute_common_key("01.010.020") == compute_common_key("90.010.020")

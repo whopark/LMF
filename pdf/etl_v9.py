@@ -21,8 +21,10 @@ def clean_text(text):
     """Normalize whitespace and standardize bullet characters."""
     if not text:
         return ""
-    # Replace • (U+2022) with ∙ (U+22C5) per 심사점검표 spec
-    text = text.replace("•", "⋅")
+    # H1: Normalize all bullet variants to ∙ (U+2219, BULLET OPERATOR) per 심사점검표 spec.
+    # Source contains • (U+2022). Previous code wrongly used ⋅ (U+22C5, DOT OPERATOR).
+    for ch in ("•", "⋅", "·"):  # U+2022, U+22C5, U+00B7
+        text = text.replace(ch, "∙")  # U+2219
     # Normalize multiple spaces/tabs to single space
     text = re.sub(r"[ \t]+", " ", text)
     return text.strip()
@@ -54,10 +56,13 @@ def infer_classification(score, has_na, item_type):
 
 
 def compute_common_key(item_number):
-    """'01.010.090' → '010.090' (last 7 characters)."""
-    if item_number and len(item_number) >= 7:
-        return item_number[-7:]
-    return ""
+    """Extract common_key from standard item_number format 'NN.NNN.NNN' → 'NNN.NNN'.
+
+    H2: Uses regex instead of length-based slicing to handle non-standard formats
+    (e.g. '08.제공.001') safely — returns '' for those instead of garbled result.
+    """
+    m = re.match(r"^\d{2}\.(\d{3}\.\d{3})$", item_number or "")
+    return m.group(1) if m else ""
 
 
 def compute_ordering(source_items):
@@ -180,13 +185,36 @@ def apply_manual_corrections(items, corrections_path):
     }
 
     new_items = []
+    skipped_comments = 0
+    unmatched_patches = []
+
     for corr in corrections:
+        # H6: Skip template comment-only objects explicitly
+        if all(k.startswith("_comment") for k in corr.keys()):
+            skipped_comments += 1
+            continue
+
         if corr.get("_new"):
+            # Warn about TO BE FILLED placeholders to prevent dummy data entering DB
+            q = corr.get("question", "")
+            if "TO BE FILLED" in str(q).upper():
+                print(f"[corrections] WARNING: _new item '{corr.get('item_number')}' "
+                      f"has placeholder question — remove before import!")
             new_items.append(corr)
             continue
+
+        # Patch existing item
         key = (corr.get("item_number"), corr.get("year"))
         if key in key_to_idx:
             items[key_to_idx[key]].update(corr.get("patch", {}))
+        elif key != (None, None):
+            unmatched_patches.append(key)
+
+    if skipped_comments:
+        print(f"[corrections] Skipped {skipped_comments} _comment template object(s)")
+    if unmatched_patches:
+        print(f"[corrections] WARNING: {len(unmatched_patches)} patch(es) had no matching item: "
+              f"{unmatched_patches[:5]}")
 
     return items + new_items
 

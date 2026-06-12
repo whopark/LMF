@@ -1,3 +1,4 @@
+const { serverError } = require('../utils/httpError');
 const express = require('express');
 const Item = require('../models/Item');
 
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
       subCategories,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'filters.js');
   }
 });
 
@@ -36,7 +37,7 @@ router.get('/item-numbers', async (req, res) => {
     const numbers = await Item.distinct('item_number', query);
     res.json(numbers.filter(Boolean).sort());
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'filters.js');
   }
 });
 

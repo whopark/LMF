@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { requireAuth } = require('../middleware/roles');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
 
@@ -16,15 +17,14 @@ const STATIC_USERS = [
   { name: '관리자', role: 'admin' },
 ];
 
-// GET /api/users — user list for dropdown selection
-router.get('/', async (req, res) => {
+// GET /api/users — user list for dropdown selection (viewer+)
+router.get('/', requireAuth('viewer'), async (req, res) => {
   try {
     const dbUsers = await User.find({ active: true }).select('name role').lean();
     const users = dbUsers.length > 0 ? dbUsers : STATIC_USERS;
     res.json(users);
   } catch (err) {
-    // Fallback to static list if DB unavailable
-    res.json(STATIC_USERS);
+    serverError(res, err, 'GET /users');
   }
 });
 

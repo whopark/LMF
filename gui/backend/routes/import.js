@@ -1,24 +1,12 @@
 const express = require('express');
 const Item = require('../models/Item');
+const { requireAuth } = require('../middleware/roles');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
 
-// API Key middleware (local copy — import route predates shared middleware)
-const requireApiKey = (req, res, next) => {
-  const apiKey = req.headers['x-api-key'] || req.query.apiKey;
-  const validKey = process.env.API_KEY;
-
-  if (!validKey) {
-    return res.status(500).json({ message: 'API_KEY not configured on server' });
-  }
-  if (!apiKey || apiKey !== validKey) {
-    return res.status(401).json({ message: 'Invalid or missing API key' });
-  }
-  next();
-};
-
-// POST /api/import/bulk — bulk import flat Item documents
-router.post('/bulk', requireApiKey, async (req, res) => {
+// POST /api/import/bulk — bulk import flat Item documents (admin only)
+router.post('/bulk', requireAuth('admin'), async (req, res) => {
   try {
     const { documents, clearExisting } = req.body;
 
@@ -56,13 +44,12 @@ router.post('/bulk', requireApiKey, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('[Import] Error:', err);
-    res.status(500).json({ message: 'Import failed', error: err.message });
+    serverError(res, err, 'POST /import/bulk');
   }
 });
 
-// GET /api/import/status — current database stats
-router.get('/status', async (req, res) => {
+// GET /api/import/status — current database stats (viewer+)
+router.get('/status', requireAuth('viewer'), async (req, res) => {
   try {
     const count = await Item.countDocuments();
     const years = await Item.distinct('year');
@@ -80,7 +67,7 @@ router.get('/status', async (req, res) => {
       documentsPerYear: yearCounts.map(y => ({ year: y._id, count: y.count })),
     });
   } catch (err) {
-    res.status(500).json({ message: 'Status check failed', error: err.message });
+    serverError(res, err, 'GET /import/status');
   }
 });
 

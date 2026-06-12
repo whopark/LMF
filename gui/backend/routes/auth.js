@@ -1,3 +1,4 @@
+const { serverError } = require('../utils/httpError');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -54,7 +55,7 @@ router.post('/login', async (req, res) => {
       user: { name: user.name, role: user.role },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'auth.js');
   }
 });
 

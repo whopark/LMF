@@ -59,3 +59,19 @@ describe('diffWords — word substitution', () => {
     expect(added).toContain('권장');
   });
 });
+
+describe('H3 regression — no stack overflow on long texts', () => {
+  it('handles 200+ word texts without throwing', () => {
+    const words = Array.from({ length: 200 }, (_, i) => `word${i}`);
+    const oldText = words.join(' ');
+    const newText = [...words.slice(50), ...words.slice(0, 50)].join(' ');
+    expect(() => diffWords(oldText, newText)).not.toThrow();
+  });
+
+  it('returns correct same count for identical long texts', () => {
+    const text = Array.from({ length: 100 }, (_, i) => `단어${i}`).join(' ');
+    const result = diffWords(text, text);
+    expect(result.every(t => t.type === 'same')).toBe(true);
+    expect(result.length).toBe(100);
+  });
+});

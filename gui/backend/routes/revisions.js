@@ -1,3 +1,4 @@
+const { serverError } = require('../utils/httpError');
 const express = require('express');
 const mongoose = require('mongoose');
 const Item = require('../models/Item');
@@ -19,7 +20,7 @@ router.get('/edit-type-codes', async (req, res) => {
     }
     res.json(codes);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'revisions.js');
   }
 });
 
@@ -47,7 +48,7 @@ router.get('/', async (req, res) => {
 
     res.json({ revisions, total, page: safePage, totalPages: Math.ceil(total / safeLimit) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'revisions.js');
   }
 });
 
@@ -102,7 +103,7 @@ router.post('/transition/:itemId', requireAuth('editor'), async (req, res) => {
       revision: updated.revision,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'revisions.js');
   }
 });
 

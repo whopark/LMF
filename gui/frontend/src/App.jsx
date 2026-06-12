@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 
@@ -57,11 +57,14 @@ function AppContent() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [selectedItem]);
 
-  // Push history state when modal opens
+  // Push history state only when transitioning null → item (not item → item).
+  // Prevents stacking duplicate entries that make back-button behavior unreliable.
+  const prevItemRef = useRef(null);
   useEffect(() => {
-    if (selectedItem) {
+    if (selectedItem && !prevItemRef.current) {
       window.history.pushState({ modalOpen: true }, '');
     }
+    prevItemRef.current = selectedItem;
   }, [selectedItem]);
 
   // Fetch Dashboard Items

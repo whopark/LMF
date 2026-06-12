@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import DashboardView from '../src/components/DashboardView.jsx';
 import { FilterProvider } from '../src/contexts/FilterContext.jsx';
+import { AuthProvider } from '../src/contexts/AuthContext.jsx';
 
 // Stub API calls made inside useFilters / FilterContext
 vi.mock('axios', () => ({
@@ -32,14 +33,16 @@ const sampleItems = [
 
 function renderDashboard(props = {}) {
   return render(
-    <FilterProvider>
-      <DashboardView
-        items={sampleItems}
-        loading={false}
-        setSelectedItem={vi.fn()}
-        {...props}
-      />
-    </FilterProvider>
+    <AuthProvider>
+      <FilterProvider>
+        <DashboardView
+          items={sampleItems}
+          loading={false}
+          setSelectedItem={vi.fn()}
+          {...props}
+        />
+      </FilterProvider>
+    </AuthProvider>
   );
 }
 

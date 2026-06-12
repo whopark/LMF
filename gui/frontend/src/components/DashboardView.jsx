@@ -1,8 +1,10 @@
 import React from 'react';
+import axios from 'axios';
 import { Search, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getTagClass, formatScore, API_BASE } from '../utils/helpers.jsx';
 import { useFilterContext } from '../contexts/FilterContext.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 const CLASS_LABEL = { C: '핵심', R: '필요', B: '기본' };
 const CLASS_CSS = { C: 'badge-core', R: 'badge-required', B: 'badge-basic' };
@@ -14,12 +16,24 @@ const SEARCH_FIELDS = [
   { value: 'description', label: '설명 키워드' },
 ];
 
-function buildExportUrl(base, params) {
-  const q = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => { if (v) q.set(k, v); });
-  const apiKey = import.meta.env?.VITE_API_KEY || '';
-  if (apiKey) q.set('apiKey', apiKey);
-  return `${base}?${q.toString()}`;
+// C3: Download via blob to keep auth token in headers (not URL querystring).
+async function downloadBlob(path, filename, params, authHeader) {
+  try {
+    const q = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => { if (v) q.set(k, String(v)); });
+    const url = `${path}?${q.toString()}`;
+    const res = await axios.get(url, { responseType: 'blob', headers: authHeader });
+    const blobUrl = URL.createObjectURL(res.data);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error(`[export] Failed to download ${filename}:`, err.message);
+  }
 }
 
 function DashboardView({ items, loading, setSelectedItem }) {
@@ -93,6 +107,15 @@ function DashboardView({ items, loading, setSelectedItem }) {
 
 function ExportMenu({ exportParams }) {
   const [open, setOpen] = React.useState(false);
+  const { authHeader } = useAuth();
+  const btnStyle = { display: 'block', padding: '0.4rem 0.75rem', color: '#94a3b8',
+    background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.85rem',
+    width: '100%', textAlign: 'left' };
+
+  const dl = (path, name) => {
+    downloadBlob(`${API_BASE}${path}`, name, exportParams, authHeader());
+    setOpen(false);
+  };
 
   return (
     <div style={{ position: 'relative' }}>
@@ -109,30 +132,15 @@ function ExportMenu({ exportParams }) {
           background: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem',
           padding: '0.5rem', zIndex: 50, minWidth: '180px',
         }}>
-          <a
-            href={buildExportUrl(`${API_BASE}/export/items.xlsx`, exportParams)}
-            download="items.xlsx"
-            style={{ display: 'block', padding: '0.4rem 0.75rem', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem' }}
-            onClick={() => setOpen(false)}
-          >
+          <button style={btnStyle} onClick={() => dl('/export/items.xlsx', 'items.xlsx')}>
             📊 문항 목록 (.xlsx)
-          </a>
-          <a
-            href={buildExportUrl(`${API_BASE}/export/revisions.xlsx`, exportParams)}
-            download="revisions.xlsx"
-            style={{ display: 'block', padding: '0.4rem 0.75rem', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem' }}
-            onClick={() => setOpen(false)}
-          >
+          </button>
+          <button style={btnStyle} onClick={() => dl('/export/revisions.xlsx', 'revisions.xlsx')}>
             📋 개정 이력 (.xlsx)
-          </a>
-          <a
-            href={buildExportUrl(`${API_BASE}/export/revisions.docx`, exportParams)}
-            download="revisions.docx"
-            style={{ display: 'block', padding: '0.4rem 0.75rem', color: '#94a3b8', textDecoration: 'none', fontSize: '0.85rem' }}
-            onClick={() => setOpen(false)}
-          >
+          </button>
+          <button style={btnStyle} onClick={() => dl('/export/revisions.docx', 'revisions.docx')}>
             📄 개정 보고서 (.docx)
-          </a>
+          </button>
           <div
             style={{ borderTop: '1px solid #334155', margin: '0.25rem 0' }}
           />

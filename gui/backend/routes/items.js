@@ -5,8 +5,15 @@ const Revision = require('../models/Revision');
 const AuditLog = require('../models/AuditLog');
 const { requireApiKey } = require('../middleware/auth');
 const { requireAuth } = require('../middleware/roles');
+const { serverError } = require('../utils/httpError');
 
 const router = express.Router();
+
+// Safely parse year query param — returns undefined for invalid/injected values
+function safeYear(value) {
+  const n = parseInt(String(value ?? ''), 10);
+  return Number.isFinite(n) ? n : undefined;
+}
 
 // Maps request body field names to Item model fields
 const PATCH_FIELD_MAP = {
@@ -48,8 +55,9 @@ router.get('/', async (req, res) => {
     const safePage = Math.max(parseInt(page) || 1, 1);
 
     const query = {};
-    if (area) query.area_code = area;
-    if (year) query.year = parseInt(year);
+    if (area) query.area_code = String(area);
+    const parsedYear = safeYear(year);
+    if (parsedYear !== undefined) query.year = parsedYear;
     if (sub_category) query.sub_category = sub_category;
     if (classification) query.classification = classification;
     if (revised_only === 'true') query['revision.revised'] = true;
@@ -87,7 +95,7 @@ router.get('/', async (req, res) => {
       totalPages: Math.ceil(total / safeLimit),
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'items');
   }
 });
 
@@ -108,7 +116,7 @@ router.get('/categories', async (req, res) => {
       title: `${a._id}.${a.area_name || ''}_${a.year || ''}`,
     })));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'items');
   }
 });
 
@@ -127,7 +135,7 @@ router.get('/:code', async (req, res) => {
 
     res.json(items.map(toResponse));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'items');
   }
 });
 
@@ -141,12 +149,10 @@ router.patch('/:id', requireAuth('editor'), async (req, res) => {
       return res.status(400).json({ message: 'Invalid document ID format' });
     }
 
+    // Read existing item for before-snapshot (needed for revision log)
     const existing = await Item.findById(id).lean();
     if (!existing) {
       return res.status(404).json({ message: 'Item not found' });
-    }
-    if (existing.revision && existing.revision.locked) {
-      return res.status(403).json({ message: 'Item is locked (final status). Unlock required.' });
     }
 
     const updates = {};
@@ -174,11 +180,20 @@ router.patch('/:id', requireAuth('editor'), async (req, res) => {
     const user = req.user?.name || 'unknown';
     updates['last_modified'] = { user, at: new Date() };
 
-    const updated = await Item.findByIdAndUpdate(
-      id,
+    // H4: Atomic findOneAndUpdate with lock guard — eliminates TOCTOU race window.
+    // If the item is locked (or missing), this returns null instead of updating.
+    const updated = await Item.findOneAndUpdate(
+      { _id: id, 'revision.locked': { $ne: true } },
       { $set: updates },
       { new: true, runValidators: true }
     ).lean();
+
+    if (!updated) {
+      // Re-check to distinguish "not found" vs "locked"
+      const current = await Item.findById(id).select('revision').lean();
+      if (!current) return res.status(404).json({ message: 'Item not found' });
+      return res.status(403).json({ message: 'Item is locked (final status). Unlock required.' });
+    }
 
     // Record revision log (non-blocking — failure does not roll back the PATCH)
     const scoreChanged = updates.score !== undefined && updates.score !== existing.score;
@@ -216,7 +231,7 @@ router.patch('/:id', requireAuth('editor'), async (req, res) => {
 
     res.json(toResponse(updated));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'items');
   }
 });
 

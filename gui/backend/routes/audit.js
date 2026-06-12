@@ -1,3 +1,4 @@
+const { serverError } = require('../utils/httpError');
 const express = require('express');
 const AuditLog = require('../models/AuditLog');
 const { requireAuth } = require('../middleware/roles');
@@ -26,7 +27,7 @@ router.get('/', requireAuth('admin'), async (req, res) => {
 
     res.json({ logs, total, page: safePage, totalPages: Math.ceil(total / safeLimit) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err, 'audit.js');
   }
 });
 
