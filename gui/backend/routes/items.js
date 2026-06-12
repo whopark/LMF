@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Item = require('../models/Item');
+const Revision = require('../models/Revision');
 const { requireApiKey } = require('../middleware/auth');
 
 const router = express.Router();
@@ -120,6 +121,7 @@ router.get('/:code', async (req, res) => {
 });
 
 // PATCH /api/items/:id — update item fields (requires API key)
+// Optional body fields: edit_types (array), reason (string), x-user header
 router.patch('/:id', requireApiKey, async (req, res) => {
   try {
     const { id } = req.params;
@@ -128,8 +130,7 @@ router.patch('/:id', requireApiKey, async (req, res) => {
       return res.status(400).json({ message: 'Invalid document ID format' });
     }
 
-    // Check lock status before applying any changes
-    const existing = await Item.findById(id).select('revision').lean();
+    const existing = await Item.findById(id).lean();
     if (!existing) {
       return res.status(404).json({ message: 'Item not found' });
     }
@@ -137,7 +138,6 @@ router.patch('/:id', requireApiKey, async (req, res) => {
       return res.status(403).json({ message: 'Item is locked (final status). Unlock required.' });
     }
 
-    // Map request body fields to model fields
     const updates = {};
     let hasValid = false;
     for (const [reqField, modelField] of Object.entries(PATCH_FIELD_MAP)) {
@@ -154,11 +154,44 @@ router.patch('/:id', requireApiKey, async (req, res) => {
       });
     }
 
+    // Auto-transition none → draft on first edit
+    if ((existing.revision?.status || 'none') === 'none') {
+      updates['revision.status'] = 'draft';
+    }
+
+    const rawUser = req.headers['x-user'] || '';
+    const user = rawUser ? decodeURIComponent(rawUser) : 'unknown';
+    updates['last_modified'] = { user, at: new Date() };
+
     const updated = await Item.findByIdAndUpdate(
       id,
       { $set: updates },
       { new: true, runValidators: true }
     ).lean();
+
+    // Record revision log (non-blocking — failure does not roll back the PATCH)
+    const scoreChanged = updates.score !== undefined && updates.score !== existing.score;
+    const before = {
+      question: existing.question, description: existing.description,
+      score: existing.score, classification: existing.classification, na_available: existing.na_available,
+    };
+    const after = {
+      question: updated.question, description: updated.description,
+      score: updated.score, classification: updated.classification, na_available: updated.na_available,
+    };
+    Revision.create({
+      item_number: existing.item_number,
+      area_code: existing.area_code,
+      common_key: existing.common_key,
+      year: existing.year,
+      user,
+      edit_types: Array.isArray(req.body.edit_types) ? req.body.edit_types : [],
+      reason: req.body.reason || '',
+      before,
+      after,
+      status_at_save: existing.revision?.status || 'none',
+      score_changed: scoreChanged,
+    }).catch(err => console.error('[PATCH] Failed to create revision log:', err.message));
 
     res.json(toResponse(updated));
   } catch (err) {
