@@ -40,7 +40,7 @@ function toResponse(item) {
 // GET /api/items — paginated list with filtering & search
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 50, area, sub_category, year, search, classification, revised_only } = req.query;
+    const { page = 1, limit = 50, area, sub_category, year, search, search_field, classification, revised_only } = req.query;
 
     const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 200);
     const safePage = Math.max(parseInt(page) || 1, 1);
@@ -55,11 +55,20 @@ router.get('/', async (req, res) => {
     if (search) {
       const escaped = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(escaped, 'i');
-      query.$or = [
-        { item_number: regex },
-        { question: regex },
-        { description: regex },
-      ];
+      // search_field restricts which field to search; default searches all three
+      if (search_field === 'item_number') {
+        query.item_number = regex;
+      } else if (search_field === 'question') {
+        query.question = regex;
+      } else if (search_field === 'description') {
+        query.description = regex;
+      } else {
+        query.$or = [
+          { item_number: regex },
+          { question: regex },
+          { description: regex },
+        ];
+      }
     }
 
     const total = await Item.countDocuments(query);

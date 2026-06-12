@@ -24,6 +24,7 @@ function AppContent() {
     setTotalPages,
     classification,
     revisedOnly,
+    searchField,
     historyArea,
     setItemNumbers,
     selectedHistoryNumber,
@@ -75,6 +76,7 @@ function AppContent() {
         search: searchTerm || undefined,
         classification: classification || undefined,
         revised_only: revisedOnly ? 'true' : undefined,
+        search_field: searchField || undefined,
       };
       const res = await axios.get(`${API_BASE}/items`, { params });
       setItems(res.data.items);
@@ -85,7 +87,7 @@ function AppContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, classification, revisedOnly, viewMode, setTotalCount, setTotalPages]);
+  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, searchField, classification, revisedOnly, viewMode, setTotalCount, setTotalPages]);
 
   useEffect(() => {
     fetchItems();

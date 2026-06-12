@@ -22,6 +22,8 @@ export function FilterProvider({ children }) {
   // Extended dashboard filters (Phase 3)
   const [classification, setClassification] = useState('');
   const [revisedOnly, setRevisedOnly] = useState(false);
+  // Search field restriction: '' = all, 'item_number', 'question', 'description'
+  const [searchField, setSearchField] = useState('');
 
   // Stage 1 user identity (Phase 3) — no auth, just records who is editing
   const [selectedUser, setSelectedUser] = useState('');
@@ -78,6 +80,7 @@ export function FilterProvider({ children }) {
     setSearchTerm('');
     setClassification('');
     setRevisedOnly(false);
+    setSearchField('');
     setPage(1);
     clearSelection();
     setHistoryArea('');
@@ -102,6 +105,7 @@ export function FilterProvider({ children }) {
     // Extended filters
     classification, setClassification,
     revisedOnly, setRevisedOnly,
+    searchField, setSearchField,
     // User identity
     selectedUser, setSelectedUser,
     // History - Tracking
