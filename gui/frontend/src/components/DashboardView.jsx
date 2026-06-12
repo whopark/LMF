@@ -8,8 +8,7 @@ const CLASS_LABEL = { C: '핵심', R: '필요', B: '기본' };
 const CLASS_CSS = { C: 'badge-core', R: 'badge-required', B: 'badge-basic' };
 
 function DashboardView({ items, loading, setSelectedItem }) {
-  // Use context directly — fixes "setSearchTerm is not a function" bug
-  const { searchTerm, setSearchTerm, page, setPage, totalPages } = useFilterContext();
+  const { searchTerm, setSearchTerm, page, setPage, totalPages, selectedItemIds, toggleItemSelection } = useFilterContext();
 
   return (
     <>
@@ -35,7 +34,13 @@ function DashboardView({ items, loading, setSelectedItem }) {
         ) : (
           <div className="items-grid">
             {items.map(item => (
-              <ItemCard key={item._id} item={item} onClick={() => setSelectedItem(item)} />
+              <ItemCard
+                key={item._id}
+                item={item}
+                checked={Boolean(selectedItemIds[item._id])}
+                onCheck={e => { e.stopPropagation(); toggleItemSelection(item); }}
+                onClick={() => setSelectedItem(item)}
+              />
             ))}
           </div>
         )}
@@ -48,7 +53,7 @@ function DashboardView({ items, loading, setSelectedItem }) {
   );
 }
 
-function ItemCard({ item, onClick }) {
+function ItemCard({ item, checked, onCheck, onClick }) {
   const ai = item.about_item;
   const cls = ai?.item_type || '';
   const isRevised = item.revision?.revised;
@@ -65,6 +70,13 @@ function ItemCard({ item, onClick }) {
       onClick={onClick}
     >
       <div className="item-header">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onCheck}
+          onClick={e => e.stopPropagation()}
+          style={{ cursor: 'pointer', marginRight: '0.4rem' }}
+        />
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <span className="item-id">{ai?.item_number}</span>
           {isRevised && <span className="badge-revised">REVISED</span>}

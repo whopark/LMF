@@ -5,6 +5,7 @@ import './App.css';
 import Sidebar from './components/Sidebar';
 import DashboardView from './components/DashboardView';
 import HistoryView from './components/HistoryView';
+import RevisionListView from './components/RevisionListView';
 import ItemModal from './components/ItemModal';
 import { API_BASE } from './utils/helpers.jsx';
 import { FilterProvider, useFilterContext } from './contexts/FilterContext';
@@ -32,6 +33,9 @@ function AppContent() {
     compareArea,
     setChangesData,
     changesData,
+    selectedItemObjects,
+    setHistoryArea,
+    setSelectedHistoryNumber,
   } = useFilterContext();
 
   const [items, setItems] = useState([]);
@@ -150,13 +154,10 @@ function AppContent() {
       <Sidebar />
 
       <main className="main-content">
-        {viewMode === 'dashboard' ? (
-          <DashboardView
-            items={items}
-            loading={loading}
-            setSelectedItem={setSelectedItem}
-          />
-        ) : (
+        {viewMode === 'dashboard' && (
+          <DashboardView items={items} loading={loading} setSelectedItem={setSelectedItem} />
+        )}
+        {viewMode === 'history' && (
           <HistoryView
             historySubMode={historySubMode}
             loading={loading}
@@ -167,6 +168,15 @@ function AppContent() {
             selectedHistoryNumber={selectedHistoryNumber}
             historyItems={historyItems}
             setSelectedItem={setSelectedItem}
+          />
+        )}
+        {viewMode === 'revision' && (
+          <RevisionListView
+            selectedItems={selectedItemObjects}
+            onNavigateToRevision={(item) => {
+              setHistoryArea(item.area);
+              setSelectedHistoryNumber(item.about_item.item_number);
+            }}
           />
         )}
       </main>

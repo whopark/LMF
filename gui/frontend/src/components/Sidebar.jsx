@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { HelpCircle, LayoutTemplate, History, Calendar, Map, Tag, ChevronRight, GitCompare, User, Filter } from 'lucide-react';
+import { HelpCircle, LayoutTemplate, History, Calendar, Map, Tag, ChevronRight, GitCompare, User, Filter, ClipboardList } from 'lucide-react';
 import axios from 'axios';
 import { useFilterContext } from '../contexts/FilterContext';
 import { API_BASE } from '../utils/helpers.jsx';
 
 function Sidebar() {
-  const { viewMode, setViewMode, totalCount, resetFilters } = useFilterContext();
+  const { viewMode, setViewMode, totalCount, resetFilters, selectedItemObjects } = useFilterContext();
 
   return (
     <aside className="sidebar">
@@ -26,10 +26,23 @@ function Sidebar() {
         </button>
         <button
           className={`select-input ${viewMode === 'history' ? 'active-mode' : ''}`}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+          style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
           onClick={() => setViewMode('history')}
         >
           <History size={18} /> 문항 연도별 추적
+        </button>
+        <button
+          className={`select-input ${viewMode === 'revision' ? 'active-mode' : ''}`}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+          onClick={() => setViewMode('revision')}
+        >
+          <ClipboardList size={18} />
+          개정 대상 목록
+          {selectedItemObjects.length > 0 && (
+            <span className="badge-count" style={{ marginLeft: 'auto', background: '#38bdf8', borderRadius: '50%', width: '1.2rem', height: '1.2rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {selectedItemObjects.length}
+            </span>
+          )}
         </button>
       </div>
 

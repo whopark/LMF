@@ -26,6 +26,25 @@ export function FilterProvider({ children }) {
   // Stage 1 user identity (Phase 3) — no auth, just records who is editing
   const [selectedUser, setSelectedUser] = useState('');
 
+  // Dashboard checkbox selection — item _id → true map (화면 A)
+  const [selectedItemIds, setSelectedItemIds] = useState({});
+  const [selectedItemObjects, setSelectedItemObjects] = useState([]);
+
+  const toggleItemSelection = (item) => {
+    setSelectedItemIds(prev => {
+      const next = { ...prev };
+      if (next[item._id]) {
+        delete next[item._id];
+        setSelectedItemObjects(o => o.filter(i => i._id !== item._id));
+      } else {
+        next[item._id] = true;
+        setSelectedItemObjects(o => [...o, item]);
+      }
+      return next;
+    });
+  };
+  const clearSelection = () => { setSelectedItemIds({}); setSelectedItemObjects([]); };
+
   // History - Item Tracking
   const [historyArea, setHistoryArea] = useState('');
   const [itemNumbers, setItemNumbers] = useState([]);
@@ -60,6 +79,7 @@ export function FilterProvider({ children }) {
     setClassification('');
     setRevisedOnly(false);
     setPage(1);
+    clearSelection();
     setHistoryArea('');
     setSelectedHistoryNumber('');
     setHistoryItems([]);
@@ -93,6 +113,9 @@ export function FilterProvider({ children }) {
     compareYear, setCompareYear,
     compareArea, setCompareArea,
     changesData, setChangesData,
+    // Selection (화면 A)
+    selectedItemIds, selectedItemObjects,
+    toggleItemSelection, clearSelection,
     // Actions
     resetFilters,
   };

@@ -6,6 +6,7 @@ const importRouter = require('./import');
 const usersRouter = require('./users');
 const revisionsRouter = require('./revisions');
 const commonRouter = require('./common');
+const worklistsRouter = require('./worklists');
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use('/import', importRouter);
 router.use('/users', usersRouter);
 router.use('/revisions', revisionsRouter);
 router.use('/common', commonRouter);
+router.use('/worklists', worklistsRouter);
 
 module.exports = router;
