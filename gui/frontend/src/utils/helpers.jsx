@@ -1,13 +1,25 @@
 import React from 'react';
 
 /**
- * Returns CSS class based on item type
+ * Returns CSS class based on item type / classification code
  */
 export function getTagClass(type) {
   if (!type) return '';
-  if (type.includes('핵심')) return 'type-core';
-  if (type.includes('기본')) return 'type-basic';
+  if (type === 'C' || type.includes('핵심')) return 'type-core';
+  if (type === 'B' || type.includes('기본')) return 'type-basic';
   return 'type-required';
+}
+
+/**
+ * Formats score for display.
+ * null score or C classification → '핵심 (필수)'
+ * numeric → 'N점'
+ */
+export function formatScore(score, classification) {
+  if (score === null || score === undefined || classification === 'C') {
+    return '핵심 (필수)';
+  }
+  return `${score}점`;
 }
 
 /**

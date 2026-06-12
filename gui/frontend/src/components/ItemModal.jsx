@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { getDisplayData, formatDescription, API_BASE } from '../utils/helpers.jsx';
+import { getDisplayData, formatDescription, formatScore, API_BASE } from '../utils/helpers.jsx';
 
 function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -194,9 +194,12 @@ function ModalMetadata({ selectedItem, isEditing, editData, setEditData }) {
             }}
           />
         ) : (
-          <span>{selectedItem.about_item.score || 0}점</span>
+          <span>{formatScore(selectedItem.about_item.score, selectedItem.about_item.item_type)}</span>
         )}
       </div>
+      {'na_available' in selectedItem && (
+        <div><strong>해당없음:</strong> {selectedItem.na_available ? '적용 가능' : '해당없음 없음'}</div>
+      )}
       <div><strong>출처:</strong> {selectedItem.metadata.source} ({selectedItem.metadata.year}년)</div>
     </div>
   );

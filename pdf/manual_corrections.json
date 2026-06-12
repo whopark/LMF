@@ -1,0 +1,36 @@
+[
+  {
+    "_comment": "Template for manual corrections. Two modes:",
+    "_comment2": "1) PATCH existing item: { item_number, year, patch: {...fields} }",
+    "_comment3": "2) NEW item: { _new: true, ...full Item fields }",
+    "_comment4": "Remove _comment* lines before use."
+  },
+  {
+    "_comment_example_patch": "Fix classification for a specific item",
+    "item_number": "01.010.090",
+    "year": 2026,
+    "patch": {
+      "classification": "R",
+      "sub_category": "심사범위"
+    }
+  },
+  {
+    "_comment_example_new": "Add missing 제공서비스 item (현장검사 등_제공서비스 분야)",
+    "_new": true,
+    "item_number": "08.제공.001",
+    "area_code": "08",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "현장검사",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": { "status": "none", "locked": false, "revised": false },
+    "source": { "filename": "manual_corrections.json", "page": 0 }
+  }
+]
