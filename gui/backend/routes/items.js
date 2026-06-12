@@ -1,230 +1,165 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const ChecklistItem = require('../models/ChecklistItem');
+const Item = require('../models/Item');
 const { requireApiKey } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Whitelist of fields allowed for PATCH updates
-const ALLOWED_PATCH_FIELDS = [
-  'about_item.score',
-  'about_item.question',
-  'about_item.description',
-  'about_item.item_type',
-  'status',
-  'tags',
-  'notes'
-];
+// Maps request body field names to Item model fields
+const PATCH_FIELD_MAP = {
+  'about_item.question': 'question',
+  'about_item.description': 'description',
+  'about_item.score': 'score',
+  'about_item.item_type': 'classification',
+  'status': 'revision.status',
+};
 
-// Get items with filtering & search (flattened from nested structure)
+// Transform a flat Item document to the API response contract
+function toResponse(item) {
+  return {
+    _id: item._id,
+    area: item.area_code,
+    sub_category: item.sub_category,
+    about_item: {
+      item_number: item.item_number || '',
+      question: item.question || '',
+      description: item.description || '',
+      score: item.score,
+      item_type: item.classification || '',
+    },
+    metadata: {
+      year: item.year,
+      source: item.area_name || '',
+    },
+    revision: item.revision,
+    common_key: item.common_key,
+  };
+}
+
+// GET /api/items — paginated list with filtering & search
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 50, area, sub_category, year, search } = req.query;
+    const { page = 1, limit = 50, area, sub_category, year, search, classification } = req.query;
 
     const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 200);
     const safePage = Math.max(parseInt(page) || 1, 1);
 
-    // Build match stage
-    const match = {};
-    if (area) match.category = area;
-    if (year) match.year = parseInt(year);
+    const query = {};
+    if (area) query.area_code = area;
+    if (year) query.year = parseInt(year);
+    if (sub_category) query.sub_category = sub_category;
+    if (classification) query.classification = classification;
 
-    // Aggregation pipeline to flatten nested items
-    const pipeline = [
-      { $match: match },
-      { $unwind: '$structured_sections' },
-      { $unwind: '$structured_sections.items' },
-      {
-        $project: {
-          _id: 1,
-          year: 1,
-          category: 1,
-          title: 1,
-          section_title: '$structured_sections.title',
-          item: '$structured_sections.items'
-        }
-      }
-    ];
-
-    // Filter by section title (sub_category)
-    if (sub_category) {
-      pipeline.push({ $match: { section_title: sub_category } });
-    }
-
-    // Search filter
     if (search) {
       const escaped = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      pipeline.push({
-        $match: {
-          $or: [
-            { 'item.item_code': { $regex: escaped, $options: 'i' } },
-            { 'item.requirement': { $regex: escaped, $options: 'i' } },
-            { 'item.raw_line': { $regex: escaped, $options: 'i' } }
-          ]
-        }
-      });
+      const regex = new RegExp(escaped, 'i');
+      query.$or = [
+        { item_number: regex },
+        { question: regex },
+        { description: regex },
+      ];
     }
 
-    // Count total before pagination
-    const countPipeline = [...pipeline, { $count: 'total' }];
-    const countResult = await ChecklistItem.aggregate(countPipeline);
-    const total = countResult[0]?.total || 0;
-
-    // Add pagination
-    pipeline.push({ $skip: (safePage - 1) * safeLimit });
-    pipeline.push({ $limit: safeLimit });
-
-    const items = await ChecklistItem.aggregate(pipeline);
-
-    // Transform to match expected frontend format
-    const transformedItems = items.map(doc => ({
-      _id: doc._id,
-      area: doc.category,
-      sub_category: doc.section_title,
-      about_item: {
-        item_number: doc.item.item_code || '',
-        question: doc.item.requirement || '',
-        description: doc.item.raw_line || '',
-        score: doc.item.max_score,
-        item_type: doc.item.type || '',
-      },
-      metadata: {
-        year: doc.year,
-        source: doc.title,
-      }
-    }));
+    const total = await Item.countDocuments(query);
+    const items = await Item.find(query)
+      .sort({ sub_category_order: 1, item_order: 1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .lean();
 
     res.json({
-      items: transformedItems,
+      items: items.map(toResponse),
       total,
       page: safePage,
-      totalPages: Math.ceil(total / safeLimit)
+      totalPages: Math.ceil(total / safeLimit),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get documents (categories) list
+// GET /api/items/categories — unique area list (compatibility endpoint)
 router.get('/categories', async (req, res) => {
   try {
     const { year } = req.query;
-    const match = year ? { year: parseInt(year) } : {};
+    const query = year ? { year: parseInt(year) } : {};
 
-    const docs = await ChecklistItem.find(match)
-      .select('year category title total_items')
-      .sort({ category: 1 });
+    const areas = await Item.aggregate([
+      { $match: query },
+      { $group: { _id: '$area_code', area_name: { $first: '$area_name' }, year: { $first: '$year' } } },
+      { $sort: { _id: 1 } },
+    ]);
 
-    res.json(docs);
+    res.json(areas.map(a => ({
+      category: a._id,
+      title: `${a._id}.${a.area_name || ''}_${a.year || ''}`,
+    })));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get item by item_code
+// GET /api/items/:code — item history sorted by year desc
 router.get('/:code', async (req, res) => {
   try {
     const { code } = req.params;
 
-    const pipeline = [
-      { $unwind: '$structured_sections' },
-      { $unwind: '$structured_sections.items' },
-      { $match: { 'structured_sections.items.item_code': code } },
-      {
-        $project: {
-          year: 1,
-          category: 1,
-          title: 1,
-          section_title: '$structured_sections.title',
-          item: '$structured_sections.items'
-        }
-      },
-      { $sort: { year: -1 } }
-    ];
+    const items = await Item.find({ item_number: code })
+      .sort({ year: -1 })
+      .lean();
 
-    const results = await ChecklistItem.aggregate(pipeline);
-
-    if (results.length === 0) {
+    if (items.length === 0) {
       return res.status(404).json({ message: 'Item not found' });
     }
 
-    const history = results.map(doc => ({
-      _id: doc._id,
-      area: doc.category,
-      sub_category: doc.section_title,
-      about_item: {
-        item_number: doc.item.item_code || '',
-        question: doc.item.requirement || '',
-        description: doc.item.raw_line || '',
-        score: doc.item.max_score,
-        item_type: doc.item.type || '',
-      },
-      metadata: {
-        year: doc.year,
-        source: doc.title,
-      }
-    }));
-
-    res.json(history);
+    res.json(items.map(toResponse));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// PATCH item by document ObjectId (requires API key authentication)
+// PATCH /api/items/:id — update item fields (requires API key)
 router.patch('/:id', requireApiKey, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid document ID format' });
     }
 
-    // Filter body to only allowed fields
-    const updates = {};
-    let hasValidFields = false;
+    // Check lock status before applying any changes
+    const existing = await Item.findById(id).select('revision').lean();
+    if (!existing) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    if (existing.revision && existing.revision.locked) {
+      return res.status(403).json({ message: 'Item is locked (final status). Unlock required.' });
+    }
 
-    for (const field of ALLOWED_PATCH_FIELDS) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
-        hasValidFields = true;
+    // Map request body fields to model fields
+    const updates = {};
+    let hasValid = false;
+    for (const [reqField, modelField] of Object.entries(PATCH_FIELD_MAP)) {
+      if (req.body[reqField] !== undefined) {
+        updates[modelField] = req.body[reqField];
+        hasValid = true;
       }
     }
 
-    if (!hasValidFields) {
+    if (!hasValid) {
       return res.status(400).json({
         message: 'No valid fields to update',
-        allowed_fields: ALLOWED_PATCH_FIELDS
+        allowed_fields: Object.keys(PATCH_FIELD_MAP),
       });
     }
 
-    // Build MongoDB update object using $set
-    const updateDoc = { $set: updates };
-
-    const doc = await ChecklistItem.findByIdAndUpdate(
+    const updated = await Item.findByIdAndUpdate(
       id,
-      updateDoc,
+      { $set: updates },
       { new: true, runValidators: true }
-    );
+    ).lean();
 
-    if (!doc) {
-      return res.status(404).json({ message: 'Document not found' });
-    }
-
-    // Return response in format matching GET endpoint
-    res.json({
-      _id: doc._id,
-      area: doc.category,
-      about_item: doc['about_item'] || { score: updates['about_item.score'] },
-      metadata: {
-        year: doc.year,
-        source: doc.title
-      },
-      status: doc.status,
-      tags: doc.tags,
-      notes: doc.notes
-    });
+    res.json(toResponse(updated));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

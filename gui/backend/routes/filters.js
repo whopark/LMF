@@ -1,61 +1,40 @@
 const express = require('express');
-const ChecklistItem = require('../models/ChecklistItem');
+const Item = require('../models/Item');
 
 const router = express.Router();
 
-// Get filter options (years, categories, sections)
+// GET /api/filters — return distinct years, areas, and sub_categories
 router.get('/', async (req, res) => {
   try {
-    const years = await ChecklistItem.distinct('year');
+    const years = await Item.distinct('year');
 
-    // Get unique categories with their display names from title field
-    // Title format: "{code}.{name}_{year}" e.g., "01.검사실운영_2026"
-    const categoriesWithNames = await ChecklistItem.aggregate([
-      { $group: { _id: '$category', title: { $first: '$title' } } },
-      { $sort: { _id: 1 } }
+    const areaDocs = await Item.aggregate([
+      { $group: { _id: '$area_code', name: { $first: '$area_name' } } },
+      { $sort: { _id: 1 } },
     ]);
+    const areas = areaDocs.map(a => ({ code: a._id, name: a.name || a._id }));
 
-    // Extract display name from title (remove code prefix and year suffix)
-    const areas = categoriesWithNames.map(cat => {
-      const title = cat.title || '';
-      // Parse "01.검사실운영_2026" -> "검사실운영"
-      const match = title.match(/^\d+\.(.+?)_\d+$/);
-      const name = match ? match[1] : cat._id;
-      return { code: cat._id, name };
-    });
-
-    // Get unique section titles using aggregation
-    const sections = await ChecklistItem.aggregate([
-      { $unwind: '$structured_sections' },
-      { $group: { _id: '$structured_sections.title' } },
-      { $sort: { _id: 1 } }
-    ]);
+    const subCategoryValues = await Item.distinct('sub_category');
+    const subCategories = subCategoryValues.filter(Boolean).sort();
 
     res.json({
-      years: years.sort((a, b) => b - a),
+      years: years.filter(Boolean).sort((a, b) => b - a),
       areas,
-      subCategories: sections.map(s => s._id).filter(Boolean)
+      subCategories,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get unique item codes for a specific category
+// GET /api/filters/item-numbers — distinct item numbers, optionally by area
 router.get('/item-numbers', async (req, res) => {
   try {
     const { area } = req.query;
-    const match = area ? { category: area } : {};
+    const query = area ? { area_code: area } : {};
 
-    const itemCodes = await ChecklistItem.aggregate([
-      { $match: match },
-      { $unwind: '$structured_sections' },
-      { $unwind: '$structured_sections.items' },
-      { $group: { _id: '$structured_sections.items.item_code' } },
-      { $sort: { _id: 1 } }
-    ]);
-
-    res.json(itemCodes.map(i => i._id).filter(Boolean));
+    const numbers = await Item.distinct('item_number', query);
+    res.json(numbers.filter(Boolean).sort());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

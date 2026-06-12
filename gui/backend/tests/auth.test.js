@@ -1,38 +1,27 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
-import ChecklistItem from '../models/ChecklistItem.js';
+import Item from '../models/Item.js';
 
-// Clean up before each test to ensure isolation
 beforeEach(async () => {
-  await ChecklistItem.deleteMany({});
+  await Item.deleteMany({});
 });
 
-// Sample document matching the nested MongoDB schema
-const sampleDoc = {
+const sampleItem = {
+  item_number: 'QA-AUTH-001',
+  area_code: '01',
   year: 2024,
-  category: '01',
-  title: '01.검사실운영_2024',
-  total_items: 1,
-  structured_sections: [
-    {
-      title: '1.1 조직',
-      items: [
-        {
-          item_code: 'QA-AUTH-001',
-          requirement: '인증 테스트용 문항',
-          raw_line: '테스트 설명',
-          type: '필수',
-          max_score: 10,
-        }
-      ]
-    }
-  ]
+  area_name: '검사실운영',
+  sub_category: '1.1 조직',
+  question: '인증 테스트용 문항',
+  description: '테스트 설명',
+  classification: 'R',
+  score: 10,
 };
 
 describe('GET endpoints work without authentication', () => {
   beforeEach(async () => {
-    await ChecklistItem.create(sampleDoc);
+    await Item.create(sampleItem);
   });
 
   it('GET /api/filters works without API key', async () => {

@@ -1,33 +1,25 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
-import ChecklistItem from '../models/ChecklistItem.js';
+import Item from '../models/Item.js';
 
-// Clean up before each test to ensure isolation
 beforeEach(async () => {
-  await ChecklistItem.deleteMany({});
+  await Item.deleteMany({});
 });
 
-// Sample document matching the nested MongoDB schema
-const sampleDoc = {
+// Flat item matching new Item schema
+const sampleItem = {
+  item_number: '01.010.001',
+  area_code: '01',
   year: 2024,
-  category: '01',
-  title: '01.검사실운영_2024',
-  total_items: 1,
-  structured_sections: [
-    {
-      title: '1.1 조직',
-      items: [
-        {
-          item_code: 'QA-001',
-          requirement: '검사실 조직도가 있는가?',
-          raw_line: '조직도에는 책임자와 담당자가 명시되어야 함',
-          type: '필수',
-          max_score: 10,
-        }
-      ]
-    }
-  ]
+  area_name: '검사실운영',
+  sub_category: '1.1 조직',
+  sub_category_order: 1,
+  item_order: 1,
+  question: '검사실 조직도가 있는가?',
+  description: '조직도에는 책임자와 담당자가 명시되어야 함',
+  score: 10,
+  classification: 'R',
 };
 
 describe('GET /api/filters', () => {
@@ -43,11 +35,12 @@ describe('GET /api/filters', () => {
   });
 
   it('returns distinct years, areas, and subCategories', async () => {
-    await ChecklistItem.create(sampleDoc);
-    await ChecklistItem.create({
-      ...sampleDoc,
-      category: '02',
-      title: '02.인력_2023',
+    await Item.create(sampleItem);
+    await Item.create({
+      ...sampleItem,
+      item_number: '02.010.001',
+      area_code: '02',
+      area_name: '인력',
       year: 2023,
     });
 
@@ -56,7 +49,6 @@ describe('GET /api/filters', () => {
     expect(res.status).toBe(200);
     expect(res.body.years).toContain(2024);
     expect(res.body.years).toContain(2023);
-    // areas is now array of {code, name} objects
     expect(res.body.areas).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: '01', name: '검사실운영' }),
@@ -68,7 +60,7 @@ describe('GET /api/filters', () => {
 
 describe('GET /api/items', () => {
   beforeEach(async () => {
-    await ChecklistItem.create(sampleDoc);
+    await Item.create(sampleItem);
   });
 
   it('returns paginated items', async () => {
@@ -84,25 +76,15 @@ describe('GET /api/items', () => {
   });
 
   it('filters by area', async () => {
-    await ChecklistItem.create({
-      ...sampleDoc,
-      category: '02',
-      title: '02.인력_2024',
-      structured_sections: [{
-        title: '2.1 인력관리',
-        items: [{
-          item_code: 'QA-002',
-          requirement: '인력 구성이 적절한가?',
-          raw_line: '인력 구성에 대한 설명',
-          type: '필수',
-          max_score: 10,
-        }]
-      }]
+    await Item.create({
+      ...sampleItem,
+      item_number: '02.010.001',
+      area_code: '02',
+      area_name: '인력',
+      question: '인력 구성이 적절한가?',
     });
 
-    const res = await request(app)
-      .get('/api/items')
-      .query({ area: '01' });
+    const res = await request(app).get('/api/items').query({ area: '01' });
 
     expect(res.status).toBe(200);
     expect(res.body.items.length).toBe(1);
@@ -110,9 +92,7 @@ describe('GET /api/items', () => {
   });
 
   it('searches by keyword', async () => {
-    const res = await request(app)
-      .get('/api/items')
-      .query({ search: '조직도' });
+    const res = await request(app).get('/api/items').query({ search: '조직도' });
 
     expect(res.status).toBe(200);
     expect(res.body.items.length).toBe(1);
@@ -127,19 +107,15 @@ describe('GET /api/items/:code', () => {
     expect(res.body.message).toBe('Item not found');
   });
 
-  it('returns item history by item code', async () => {
-    await ChecklistItem.create(sampleDoc);
-    await ChecklistItem.create({
-      ...sampleDoc,
-      year: 2023,
-      title: '01.검사실운영_2023',
-    });
+  it('returns item history by item_number', async () => {
+    await Item.create(sampleItem);
+    await Item.create({ ...sampleItem, year: 2023 });
 
-    const res = await request(app).get('/api/items/QA-001');
+    const res = await request(app).get('/api/items/01.010.001');
 
     expect(res.status).toBe(200);
     expect(res.body.length).toBe(2);
-    // Results should be sorted by year descending
+    // Results sorted by year descending
     expect(res.body[0].metadata.year).toBe(2024);
     expect(res.body[1].metadata.year).toBe(2023);
   });
