@@ -47,6 +47,13 @@
 - 아카이브: `docs/archive/2026-06/{data-integrity,answer-marker-bleed}/` (plan·design·analysis·report)
 - 검증: 멱등 실증(재실행 `changed=0`) · 브라우저(2020 분리·2025 bleed 제거 스크린샷)
 
+### 중분류 순서 (§1/§8) — **완료 (커밋·아카이브)**
+
+`subcategory-order` 사이클(~99%, SC 5/5). **B(라벨유지·min-MMM)→C(10코드 통합) 피벗**(사용자 정정).
+- MMM 백자리 → **10코드 분류**(01 심사범위…09 안전·11 제공서비스·10 검사실이전 예약). 검사특이 ~80종→06 흡수. 엣지: 제공→11·기타(005)→06·980→04.
+- 드롭다운 가나다→코드순(`filters.js`). 9,984문항 적용(백업 `..._20260614-5`), 멱등 `changed=0`, 백엔드 **198 테스트**, 브라우저 확인.
+- 커밋: `c528582`(feat)·`a317799`(archive). 아카이브 `docs/archive/2026-06/subcategory-order/`.
+
 ---
 
 ## 🔭 열린 항목 / 다음 후보
@@ -55,7 +62,8 @@
 |---|---|---|
 | ~~done~~ | ~~§5 데이터 오염(구조+bleed)~~ | ✅ **완결** — data-integrity + answer-marker-bleed, 커밋·아카이브 완료 |
 | ~~done~~ | ~~checklist data git 정책~~ | ✅ **정본 LFS 교체** — `flat_v2`(9,984) LFS 추적, final.json 언트랙, 나머지 hold (`dbda755`) |
-| **P1** | **push 여부** | `origin/master` **18 ahead**(전부 커밋, flat_v2 LFS 포함). 공개 시 history purge 별도 필요. |
+| ~~done~~ | ~~중분류 순서(§1/§8)~~ | ✅ **10코드 통합** — subcategory-order, 커밋·아카이브 (`c528582`/`a317799`) |
+| **P1** | **push 여부** | `origin/master` **2 ahead**(`c528582`·`a317799` 미push). |
 | P2 | **License 결정 (구 E)** | 미정. 의료/임상 + private. MIT/Apache-2.0/proprietary 택1. **공개 결정 시 checklist blob history purge 동반.** |
 | P3 | **LLM rate limit (구 B)** | 분당 20회 임의값. 실사용 관찰 후 조정. |
 | P4 | **§5 선택 백로그** | 탭/공백 표 blocks · 프론트 `getDisplayData` band-aid 제거 · 다중 `?` 회귀테스트(G1)·리포트 `bleedRemaining` 기록(G4) |
@@ -71,7 +79,7 @@ cd gui/backend && npm start           # :5000
 cd gui/frontend && npm run dev         # :5173  (로그인 admin/admin123)
 
 # 2. 테스트
-cd gui/backend && npm run test:run     # tests/*.test.js  (19개 파일, 189 테스트)
+cd gui/backend && npm run test:run     # tests/*.test.js  (20개 파일, 198 테스트)
 cd gui/frontend && npm run test:run    # tests/*.test.jsx (6개 파일)
 #   ※ 정확한 케이스 수는 위 명령으로 확인
 
