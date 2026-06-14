@@ -110,7 +110,7 @@ def main():
         count_ok = compare_with_source(flat_items, source_items)
         ok = ok and count_ok
 
-    print("\n[validate_etl]", "PASS ✓" if ok else "ISSUES FOUND — see above")
+    print("\n[validate_etl]", "PASS" if ok else "ISSUES FOUND - see above")
 
 
 if __name__ == "__main__":

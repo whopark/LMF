@@ -1,21 +1,55 @@
 [
   {
-    "_comment": "Template for manual corrections. Two modes:",
-    "_comment2": "1) PATCH existing item: { item_number, year, patch: {...fields} }",
-    "_comment3": "2) NEW item: { _new: true, ...full Item fields }",
-    "_comment4": "Remove _comment* lines before use."
-  },
-  {
-    "_comment_example_patch": "Fix classification for a specific item",
-    "item_number": "01.010.090",
+    "_new": true,
+    "item_number": "01.제공.001",
+    "area_code": "01",
+    "common_key": "제공.001",
     "year": 2026,
-    "patch": {
-      "classification": "R",
-      "sub_category": "심사범위"
+    "area_name": "검사실운영",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
     }
   },
   {
-    "_comment_example_new": "Add missing 제공서비스 item (현장검사 등_제공서비스 분야)",
+    "_new": true,
+    "item_number": "07.제공.001",
+    "area_code": "07",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "종합검증",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
     "_new": true,
     "item_number": "08.제공.001",
     "area_code": "08",
@@ -30,7 +64,289 @@
     "score": null,
     "classification": "C",
     "na_available": false,
-    "revision": { "status": "none", "locked": false, "revised": false },
-    "source": { "filename": "manual_corrections.json", "page": 0 }
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "09.제공.001",
+    "area_code": "09",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "수탁검사",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "10.제공.001",
+    "area_code": "10",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "진단혈액",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "21.제공.001",
+    "area_code": "21",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "임상화학",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "23.제공.001",
+    "area_code": "23",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "요검경",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "36.제공.001",
+    "area_code": "36",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "임상미생물",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "46.제공.001",
+    "area_code": "46",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "수혈의학",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "50.제공.001",
+    "area_code": "50",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "진단면역",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "60.제공.001",
+    "area_code": "60",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "유세포검사",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "70.제공.001",
+    "area_code": "70",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "조직적합성검사",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "80.제공.001",
+    "area_code": "80",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "세포유전검사",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
+  },
+  {
+    "_new": true,
+    "item_number": "90.제공.001",
+    "area_code": "90",
+    "common_key": "제공.001",
+    "year": 2026,
+    "area_name": "분자진단검사",
+    "sub_category": "제공서비스",
+    "sub_category_order": 99,
+    "item_order": 1,
+    "question": "TO BE FILLED: 제공서비스 관련 문항",
+    "description": "",
+    "score": null,
+    "classification": "C",
+    "na_available": false,
+    "revision": {
+      "status": "none",
+      "locked": false,
+      "revised": false
+    },
+    "source": {
+      "filename": "manual_corrections.json",
+      "page": 0
+    }
   }
 ]

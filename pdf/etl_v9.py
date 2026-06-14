@@ -18,13 +18,18 @@ OUTPUT_DEFAULT = Path(__file__).parent / "checklist_items_flat.json"
 
 
 def clean_text(text):
-    """Normalize whitespace and standardize bullet characters."""
+    """Normalize whitespace, bullets, and quotation marks per 심사점검표 spec."""
     if not text:
         return ""
-    # H1: Normalize all bullet variants to ∙ (U+2219, BULLET OPERATOR) per 심사점검표 spec.
-    # Source contains • (U+2022). Previous code wrongly used ⋅ (U+22C5, DOT OPERATOR).
+    # H1: Normalize all bullet variants to ∙ (U+2219, BULLET OPERATOR).
     for ch in ("•", "⋅", "·"):  # U+2022, U+22C5, U+00B7
         text = text.replace(ch, "∙")  # U+2219
+    # Normalize curly/typographic quotation marks → straight quotes matching 심사점검표.
+    # Double: " " → " / ' ' → '
+    text = text.replace("“", '"').replace("”", '"')  # " "
+    text = text.replace("‘", "'").replace("’", "'")  # ' '
+    # Full-width quotation marks → ASCII
+    text = text.replace("＂", '"').replace("＇", "'")
     # Normalize multiple spaces/tabs to single space
     text = re.sub(r"[ \t]+", " ", text)
     return text.strip()
@@ -40,14 +45,15 @@ def parse_area(area_str):
 
 def infer_classification(score, has_na, item_type):
     """Infer C/R/B classification from available signals."""
-    # Explicit item_type takes priority
+    # Explicit item_type takes priority.
+    # H8: Source data uses compound forms ("기본B", "필요R", "핵심C") — added here.
     if item_type:
         t = str(item_type).strip()
-        if t in ("C", "핵심", "Core"):
+        if t in ("C", "핵심", "Core", "핵심C"):
             return "C"
-        if t in ("R", "필요", "Required", "필수"):
+        if t in ("R", "필요", "Required", "필수", "필요R"):
             return "R"
-        if t in ("B", "기본", "Basic", "권장"):
+        if t in ("B", "기본", "Basic", "권장", "기본B"):
             return "B"
     # Null score without NA strongly implies 핵심(C)
     if score is None and not has_na:
@@ -199,7 +205,7 @@ def apply_manual_corrections(items, corrections_path):
             q = corr.get("question", "")
             if "TO BE FILLED" in str(q).upper():
                 print(f"[corrections] WARNING: _new item '{corr.get('item_number')}' "
-                      f"has placeholder question — remove before import!")
+                      f"has placeholder question - remove before import!")
             new_items.append(corr)
             continue
 
