@@ -39,14 +39,23 @@
 
 > 검증: 연도별 추적 화면 브라우저 구동 + `vite build`(2056 modules, 0 error) 통과 후 커밋.
 
+### §5 데이터 오염 정제 — PDCA 사이클 완료 (미커밋)
+
+`data-integrity` 사이클 plan→design→do→check→report 완료. **Match Rate ~97%, SC 6/6 Met.**
+- 산출물: `gui/backend/scripts/lib/spec5/*`(5)·`migrate-spec5.js`·테스트 2개 + `docs/{01-plan,02-design,03-analysis,04-report}/…data-integrity*`
+- 적용(로컬 DB): 2020 병합분리(→0)·2021 미분류(1,601→17)·blocks(9,532) — **9,573 변경, 백업 `checklist_items_backup_20260614-2`**
+- 검증: 백엔드 182 테스트 통과 · dry-run 재실행 `changed=0`(멱등) · 브라우저 2020 분리 표시
+- **상태: 미커밋 · archive 미실행** · deferred: 답안마커 bleed 12건(2025 `예 (필수)`)
+
 ---
 
 ## 🔭 열린 항목 / 다음 후보
 
 | 우선 | 항목 | 메모 |
 |---|---|---|
-| **P1** | **§5 데이터 오염 (신규)** | 2025 데이터셋 질문 본문에 `예 (필수)` bleed → year-diff `수정` 카운트 부풀림(1335). 브라우저 검증 중 발견. PDCA 사이클 후보(`/bkit:pdca pm data-integrity` 등). |
-| P2 | **8커밋 push 여부** | `origin/master` 8 ahead. 공개 시 checklist data 제외 확인됨. |
+| ~~done~~ | ~~§5 구조 오염(2020 병합·2021 미분류·blocks)~~ | ✅ **완료(미커밋)** — data-integrity 사이클, SC 6/6. 커밋·archive 남음 |
+| **P1** | **§5 답안마커 bleed 12건 (deferred)** | 2025 질문에 `예 (필수)` 혼입(2021 10·2025 2). §5 차기 사이클. |
+| P2 | **미커밋 push 여부** | `origin/master` 9 ahead + §5 미커밋. 공개 시 checklist data 제외 확인됨. |
 | P3 | **checklist data git 정책 확정** | `pdf/checklist_items_*.json` 현재 gitignore hold. LFS 커밋 vs 영구 제외 결정 필요. |
 | P3 | **License 결정 (구 E)** | 미정. 의료/임상 + private. MIT/Apache-2.0/proprietary 택1. |
 | P4 | **LLM rate limit (구 B)** | 분당 20회 임의값. 실사용 관찰 후 조정. |
@@ -62,7 +71,7 @@ cd gui/backend && npm start           # :5000
 cd gui/frontend && npm run dev         # :5173  (로그인 admin/admin123)
 
 # 2. 테스트
-cd gui/backend && npm run test:run     # tests/*.test.js  (17개 파일)
+cd gui/backend && npm run test:run     # tests/*.test.js  (19개 파일, 182 테스트)
 cd gui/frontend && npm run test:run    # tests/*.test.jsx (6개 파일)
 #   ※ 정확한 케이스 수는 위 명령으로 확인
 
