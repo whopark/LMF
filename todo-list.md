@@ -54,9 +54,9 @@
 | 우선 | 항목 | 메모 |
 |---|---|---|
 | ~~done~~ | ~~§5 데이터 오염(구조+bleed)~~ | ✅ **완결** — data-integrity + answer-marker-bleed, 커밋·아카이브 완료 |
-| **P1** | **push 여부** | `origin/master` **16 ahead**(전부 커밋). 공개 시 checklist data 제외 확인됨. |
-| P2 | **checklist data git 정책 확정** | `pdf/checklist_items_*.json` 현재 gitignore hold. LFS 커밋 vs 영구 제외 결정 필요. |
-| P3 | **License 결정 (구 E)** | 미정. 의료/임상 + private. MIT/Apache-2.0/proprietary 택1. |
+| ~~done~~ | ~~checklist data git 정책~~ | ✅ **정본 LFS 교체** — `flat_v2`(9,984) LFS 추적, final.json 언트랙, 나머지 hold (`dbda755`) |
+| **P1** | **push 여부** | `origin/master` **18 ahead**(전부 커밋, flat_v2 LFS 포함). 공개 시 history purge 별도 필요. |
+| P2 | **License 결정 (구 E)** | 미정. 의료/임상 + private. MIT/Apache-2.0/proprietary 택1. **공개 결정 시 checklist blob history purge 동반.** |
 | P3 | **LLM rate limit (구 B)** | 분당 20회 임의값. 실사용 관찰 후 조정. |
 | P4 | **§5 선택 백로그** | 탭/공백 표 blocks · 프론트 `getDisplayData` band-aid 제거 · 다중 `?` 회귀테스트(G1)·리포트 `bleedRemaining` 기록(G4) |
 
@@ -83,8 +83,8 @@ cd gui/frontend && npm run test:run    # tests/*.test.jsx (6개 파일)
 
 ## ⚠️ 잊지 말 것
 
-- **PDF·checklist 본문 절대 git 금지**(저작권). `pdf/*/`·`pdf/checklist_items_*.json`·`*.pdf` gitignore 보호 중.
-  `git add pdf/` 같은 일괄 add 금지 — **명시 경로만** 스테이징.
+- **PDF 절대 git 금지**(저작권). `pdf/*/`·`*.pdf` gitignore 보호 중. `git add pdf/` 같은 일괄 add 금지 — **명시 경로만** 스테이징.
+- **checklist 본문 JSON**: `pdf/checklist_items_*.json` gitignore hold. **단, 정본 `flat_v2.json`만 LFS 추적**(private, 재현성). 다른 checklist JSON 신규 커밋 금지. 공개 전환 시 history purge 필요.
 - `.bkit/`·`.claude/agent-memory/`·`gui/backend/coverage/`·`gui/backend/reports/`는 gitignore(런타임/생성물, 로컬 보존).
 - PATCH/민감 작업 요청 시 인증 필요(JWT viewer+ 또는 `x-api-key`).
 - `autopus-adk/`는 형제 repo, parent에서 추적 안 함.
