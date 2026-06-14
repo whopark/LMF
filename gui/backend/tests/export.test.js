@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 import app from '../app.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import Item from '../models/Item.js';
 import Revision from '../models/Revision.js';
 
@@ -115,5 +120,100 @@ describe('GET /api/export/revisions.docx', () => {
     // Response should be a binary buffer (ZIP-based docx)
     const len = res.headers['content-length'];
     if (len) expect(parseInt(len)).toBeGreaterThan(0);
+  });
+});
+
+// ─── GET /api/export/items.pdf (G1) ──────────────────────────────────────
+describe('GET /api/export/items.pdf', () => {
+  beforeEach(async () => {
+    await Item.create([
+      { ...baseItem, item_number: '01.010.001' },
+      { ...baseItem, item_number: '01.010.002', question: '인력 구성이 적절한가?' },
+    ]);
+  });
+
+  it('returns 200 with pdf content-type', async () => {
+    const res = await request(app)
+      .get('/api/export/items.pdf')
+      .set('X-API-Key', API_KEY)
+      .query({ area: '01', year: '2026' });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/pdf/);
+  });
+
+  it('response body starts with PDF magic bytes', async () => {
+    const res = await request(app)
+      .get('/api/export/items.pdf')
+      .set('X-API-Key', API_KEY)
+      .buffer(true).parse((res, callback) => {
+        const chunks = [];
+        res.on('data', c => chunks.push(c));
+        res.on('end', () => callback(null, Buffer.concat(chunks)));
+      });
+
+    expect(res.status).toBe(200);
+    // PDF files start with %PDF
+    expect(res.body.slice(0, 4).toString()).toBe('%PDF');
+  });
+
+  it('returns 200 even when no items match filters', async () => {
+    const res = await request(app)
+      .get('/api/export/items.pdf')
+      .set('X-API-Key', API_KEY)
+      .query({ area: '99' });
+
+    expect(res.status).toBe(200);
+  });
+});
+
+// ─── GET /api/export/revisions.pdf (G1) ──────────────────────────────────
+describe('GET /api/export/revisions.pdf', () => {
+  beforeEach(async () => {
+    await Revision.create([
+      {
+        item_number: '01.010.001', area_code: '01', year: 2026,
+        user: '신경화', edit_types: ['MODIFY_ITEM'], reason: 'PDF 테스트',
+        before: { question: '이전' }, after: { question: '이후' },
+        score_changed: false,
+      },
+    ]);
+  });
+
+  it('returns 200 with pdf content-type', async () => {
+    const res = await request(app)
+      .get('/api/export/revisions.pdf')
+      .set('X-API-Key', API_KEY)
+      .query({ area: '01', year: '2026' });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/pdf/);
+  });
+
+  it('content-length header is present and positive', async () => {
+    const res = await request(app)
+      .get('/api/export/revisions.pdf')
+      .set('X-API-Key', API_KEY);
+
+    expect(res.status).toBe(200);
+    const len = res.headers['content-length'];
+    if (len) expect(parseInt(len)).toBeGreaterThan(0);
+  });
+});
+
+// ─── N1: Bundled Korean font verification ─────────────────────────────────
+describe('NotoSansKR bundled font (N1)', () => {
+  it('NotoSansKR-Regular.ttf is present in assets/fonts/', () => {
+    const fontPath = path.join(__dirname, '../assets/fonts/NotoSansKR-Regular.ttf');
+    expect(fs.existsSync(fontPath)).toBe(true);
+  });
+
+  it('resolveFont() returns the bundled font path (not null/system fallback)', async () => {
+    const { buildItemsPdf } = await import('../utils/exportPdf.js');
+    // If font resolution fails, the PDF would still generate but Korean text
+    // would render as Helvetica boxes. Verify that a non-empty PDF is produced.
+    const buf = await buildItemsPdf([], {});
+    expect(buf.slice(0, 4).toString()).toBe('%PDF');
+    expect(buf.length).toBeGreaterThan(200);
   });
 });

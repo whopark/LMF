@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/roles');
 const { serverError } = require('../utils/httpError');
 const { buildItemsWorkbook, buildRevisionsWorkbook } = require('../utils/exportExcel');
 const { buildRevisionsDocx } = require('../utils/exportDocx');
+const { buildItemsPdf, buildRevisionsPdf } = require('../utils/exportPdf');
 
 const router = express.Router();
 
@@ -85,6 +86,48 @@ router.get('/revisions.docx', async (req, res) => {
     res.end(buf);
   } catch (err) {
     serverError(res, err, 'GET /export/revisions.docx');
+  }
+});
+
+// GET /api/export/items.pdf — items list as PDF (Korean font)
+router.get('/items.pdf', async (req, res) => {
+  try {
+    const items = await Item.find(buildItemQuery(req.query))
+      .sort({ area_code: 1, sub_category_order: 1, item_order: 1 })
+      .lean();
+
+    const buf = await buildItemsPdf(items, {
+      area: req.query.area,
+      year: req.query.year,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="items.pdf"');
+    res.setHeader('Content-Length', buf.length);
+    res.end(buf);
+  } catch (err) {
+    serverError(res, err, 'GET /export/items.pdf');
+  }
+});
+
+// GET /api/export/revisions.pdf — revision history as PDF
+router.get('/revisions.pdf', async (req, res) => {
+  try {
+    const revisions = await Revision.find(buildRevisionQuery(req.query))
+      .sort({ at: -1 })
+      .lean();
+
+    const buf = await buildRevisionsPdf(revisions, {
+      area: req.query.area,
+      year: req.query.year,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="revisions.pdf"');
+    res.setHeader('Content-Length', buf.length);
+    res.end(buf);
+  } catch (err) {
+    serverError(res, err, 'GET /export/revisions.pdf');
   }
 });
 
