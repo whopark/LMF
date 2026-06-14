@@ -56,6 +56,16 @@ describe('GET /api/filters', () => {
       ])
     );
   });
+
+  it('orders subCategories by sub_category_order (심사점검표 순서, 가나다 아님)', async () => {
+    // order 1,5 → [인력, 검사장비]; 가나다였다면 [검사장비, 인력](ㄱ<ㅇ)이라 구분됨
+    await Item.create({ ...sampleItem, item_number: '01.700.001', sub_category: '인력', sub_category_order: 1 });
+    await Item.create({ ...sampleItem, item_number: '01.500.001', sub_category: '검사장비', sub_category_order: 5 });
+
+    const res = await request(app).get('/api/filters');
+    expect(res.status).toBe(200);
+    expect(res.body.subCategories).toEqual(['인력', '검사장비']);
+  });
 });
 
 describe('GET /api/items', () => {

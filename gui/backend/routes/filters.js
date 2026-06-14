@@ -15,8 +15,14 @@ router.get('/', async (req, res) => {
     ]);
     const areas = areaDocs.map(a => ({ code: a._id, name: a.name || a._id }));
 
-    const subCategoryValues = await Item.distinct('sub_category');
-    const subCategories = subCategoryValues.filter(Boolean).sort();
+    // 중분류 드롭다운: 가나다(.sort) 아닌 sub_category_order(10코드=심사점검표 순서) 정렬.
+    // Design Ref: §5 — 분류당 order는 단일(통합 후); min은 방어적, 동률은 _id(라벨) tie-break.
+    const subCatDocs = await Item.aggregate([
+      { $match: { sub_category: { $nin: [null, ''] } } },
+      { $group: { _id: '$sub_category', ord: { $min: '$sub_category_order' } } },
+      { $sort: { ord: 1, _id: 1 } },
+    ]);
+    const subCategories = subCatDocs.map(d => d._id);
 
     res.json({
       years: years.filter(Boolean).sort((a, b) => b - a),
