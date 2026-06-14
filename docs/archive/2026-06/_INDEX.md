@@ -5,6 +5,7 @@
 | revision-workflow (문항 수정·개정) | completed | 96% | 2026-06-14 | `revision-workflow/` |
 | yearly-tracking (문항 연도별 추적) | completed | 99% | 2026-06-14 | `yearly-tracking/` |
 | data-integrity (§5 데이터 오염 정제) | completed | ~97% | 2026-06-14 | `data-integrity/` |
+| answer-marker-bleed (§5 잔여 bleed 12건) | completed | ~98% | 2026-06-14 | `answer-marker-bleed/` |
 
 ---
 
@@ -42,4 +43,16 @@
 - **적용(로컬 DB)**: **9,573 변경** — 2020 병합분리(→0) · 2021 미분류(1,601→17 단종) · blocks(9,532) · 백업 `checklist_items_backup_20260614-2`
 - **요약**: 과거연도 구조 오염 정제 — ∙기준 질문/설명 분리, 2026 우선 common_key 분류 백필, description→blocks 적재. 순수변환(`lib/spec5/*`) + 오케스트레이터(dry-run 기본·백업·bulkWrite·사후검증). 안전: 백업·dry-run·멱등·롤백.
 - **검증**: gap-detector 86% → 런타임 보정(멱등 실증·브라우저 SC-6) + iterate(설계 동기화·SC-2 리포트) → ~97%
-- **잔여(차기)**: 답안마커 bleed 12건(2025 `예 (필수)`) · 탭/공백 표 blocks · 프론트 `getDisplayData` band-aid 제거 · 선택적 하드닝(blocksEqual deep-equal·dry-run 사후검증)
+- **잔여(차기)**: ~~답안마커 bleed 12건~~(→ answer-marker-bleed로 해소) · 탭/공백 표 blocks · 프론트 `getDisplayData` band-aid 제거 · 선택적 하드닝(blocksEqual deep-equal·dry-run 사후검증)
+
+---
+
+## answer-marker-bleed — §5 잔여: 답안마커 bleed 12건 정제
+
+- **기간**: 2026-06-14 (data-integrity 후속)
+- **레벨**: Dynamic · **아키텍처**: spec5 통합(`cleanBleed` 순수함수 + 기존 오케스트레이터 재사용)
+- **결과**: Match Rate **~98%** · SC **6/6 Met** · 백엔드 테스트 **189/189**(spec5 bleed 7 신규) · 멱등 실증(재실행 `changed=0`)
+- **문서**: plan · design · analysis · report (4종)
+- **적용(로컬 DB)**: **12건 question만** — 2025형 `예 (필수)` 제거(2)·2021형 `?` 뒤 `(필수) ∙ 중복` 절단(10, 실설명 description 보존) · 백업 `checklist_items_backup_20260614-3`
+- **요약**: 타깃 가드(`cleanBleed` GUARD)로 bleed 문항만 정제 — 임베드 마커 제거 + 첫 `?` 절단. description/blocks/분류 불변. §5 클러스터 데이터 오염 정제 **완결**.
+- **잔여(선택)**: 다중 `?` 절단 회귀테스트 · 리포트 파일 `bleedRemaining` 기록 · `stat.bleed` 분리
