@@ -20,6 +20,10 @@ const revisionSchema = new mongoose.Schema({
   edit_types: [String],
   // Free-text reason input — stored verbatim for 연도별 추적 display
   reason: String,
+  // Verbatim source of truth (G2) — stored without any transformation.
+  raw_reason: { type: String, default: '' },
+  // SHA-256(raw_reason) for tamper detection (verifyReason).
+  reason_hash: { type: String, default: '' },
   before: snapshotSchema,
   after: snapshotSchema,
   // Status at the time of save (not the target status)

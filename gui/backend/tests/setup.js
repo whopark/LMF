@@ -1,4 +1,4 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import { beforeAll, afterAll, afterEach } from 'vitest';
 
@@ -8,12 +8,13 @@ process.env.API_KEY = process.env.API_KEY || 'test-api-key';
 let mongoServer;
 
 beforeAll(async () => {
-  // CI에서는 서비스 컨테이너 사용, 로컬에서는 in-memory 서버 사용
+  // Transactions (G1) require a replica-set connection. CI must point MONGO_URI at a
+  // replica set; locally we spin up a single-node in-memory replica set.
   const uri = process.env.MONGO_URI;
   if (uri) {
     await mongoose.connect(uri);
   } else {
-    mongoServer = await MongoMemoryServer.create();
+    mongoServer = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     await mongoose.connect(mongoServer.getUri());
   }
 });

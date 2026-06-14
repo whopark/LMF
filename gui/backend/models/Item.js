@@ -33,6 +33,12 @@ const itemSchema = new mongoose.Schema({
   item_order: { type: Number, default: 0 },
   question: String,
   description: String,
+  // G2 Fix: field-specific explanation that applies to only one area of a 공통문항.
+  // Shared description lives in `description`; this field stores per-area overrides.
+  field_specific_description: String,
+  // G3 Fix: structured representation of description for table/bullet rendering.
+  // Each block: { type: 'text'|'bullet'|'table', content: string|string[]|string[][] }
+  blocks: { type: [mongoose.Schema.Types.Mixed], default: undefined },
   score: mongoose.Schema.Types.Mixed,
   // C=핵심, R=필요, B=기본
   classification: { type: String, enum: ['C', 'R', 'B', ''], default: '' },

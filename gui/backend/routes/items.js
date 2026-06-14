@@ -2,10 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Item = require('../models/Item');
 const Revision = require('../models/Revision');
-const AuditLog = require('../models/AuditLog');
 const { requireApiKey } = require('../middleware/auth');
 const { requireAuth } = require('../middleware/roles');
 const { serverError } = require('../utils/httpError');
+const { applyItemEdit } = require('../services/revisionTxn');
 
 const router = express.Router();
 
@@ -19,6 +19,7 @@ function safeYear(value) {
 const PATCH_FIELD_MAP = {
   'about_item.question': 'question',
   'about_item.description': 'description',
+  'about_item.field_specific_description': 'field_specific_description',
   'about_item.score': 'score',
   'about_item.item_type': 'classification',
   'status': 'revision.status',
@@ -34,9 +35,13 @@ function toResponse(item) {
       item_number: item.item_number || '',
       question: item.question || '',
       description: item.description || '',
+      field_specific_description: item.field_specific_description || '',
+      blocks: item.blocks || [],
       score: item.score,
       item_type: item.classification || '',
     },
+    na_available: item.na_available || false,
+    last_modified: item.last_modified || null,
     metadata: {
       year: item.year,
       source: item.area_name || '',
@@ -49,7 +54,12 @@ function toResponse(item) {
 // GET /api/items — paginated list with filtering & search
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 50, area, sub_category, year, search, search_field, classification, revised_only } = req.query;
+    const {
+      page = 1, limit = 50, area, sub_category, year,
+      search, search_field, classification, revised_only,
+      score_min, score_max, score_null,
+      modified_after, modified_before,
+    } = req.query;
 
     const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 200);
     const safePage = Math.max(parseInt(page) || 1, 1);
@@ -61,17 +71,50 @@ router.get('/', async (req, res) => {
     if (sub_category) query.sub_category = sub_category;
     if (classification) query.classification = classification;
     if (revised_only === 'true') query['revision.revised'] = true;
+    // G5 Fix: score range filter — score_null=true returns null/C-type items (핵심/필수)
+    if (score_null === 'true') {
+      query.$or = [{ score: null }, { score: { $exists: false } }, { classification: 'C' }];
+    } else {
+      const sMin = score_min !== undefined ? parseInt(score_min) : undefined;
+      const sMax = score_max !== undefined ? parseInt(score_max) : undefined;
+      if (!Number.isNaN(sMin) && sMin !== undefined) query.score = { ...(query.score || {}), $gte: sMin };
+      if (!Number.isNaN(sMax) && sMax !== undefined) query.score = { ...(query.score || {}), $lte: sMax };
+    }
+
+    // Date range filter on last_modified.at
+    if (modified_after || modified_before) {
+      const dateFilter = {};
+      if (modified_after) {
+        const d = new Date(String(modified_after));
+        if (!isNaN(d.getTime())) dateFilter.$gte = d;
+      }
+      if (modified_before) {
+        const d = new Date(String(modified_before));
+        if (!isNaN(d.getTime())) {
+          // inclusive: extend to end of that day
+          d.setHours(23, 59, 59, 999);
+          dateFilter.$lte = d;
+        }
+      }
+      if (Object.keys(dateFilter).length > 0) query['last_modified.at'] = dateFilter;
+    }
 
     if (search) {
       const escaped = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(escaped, 'i');
-      // search_field restricts which field to search; default searches all three
       if (search_field === 'item_number') {
         query.item_number = regex;
       } else if (search_field === 'question') {
         query.question = regex;
       } else if (search_field === 'description') {
         query.description = regex;
+      } else if (search_field === 'modifier') {
+        // Search by last modifier username stored on the item
+        query['last_modified.user'] = regex;
+      } else if (search_field === 'edit_type') {
+        // Search items that have a revision with a matching edit_type code
+        const matchingRevisions = await Revision.distinct('item_number', { edit_types: regex });
+        query.item_number = { $in: matchingRevisions };
       } else {
         query.$or = [
           { item_number: regex },
@@ -141,18 +184,13 @@ router.get('/:code', async (req, res) => {
 
 // PATCH /api/items/:id — update item fields (editor role required)
 // Optional body fields: edit_types (array), reason (string), x-user header
+// Plan SC-1: item update + revision + audit commit atomically via applyItemEdit (G1).
 router.patch('/:id', requireAuth('editor'), async (req, res) => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'Invalid document ID format' });
-    }
-
-    // Read existing item for before-snapshot (needed for revision log)
-    const existing = await Item.findById(id).lean();
-    if (!existing) {
-      return res.status(404).json({ message: 'Item not found' });
     }
 
     const updates = {};
@@ -171,66 +209,20 @@ router.patch('/:id', requireAuth('editor'), async (req, res) => {
       });
     }
 
-    // Auto-transition none → draft on first edit
-    if ((existing.revision?.status || 'none') === 'none') {
-      updates['revision.status'] = 'draft';
-    }
-
     // req.user.name is set by requireAuth (JWT name OR x-user header for API key auth)
-    const user = req.user?.name || 'unknown';
-    updates['last_modified'] = { user, at: new Date() };
-
-    // H4: Atomic findOneAndUpdate with lock guard — eliminates TOCTOU race window.
-    // If the item is locked (or missing), this returns null instead of updating.
-    const updated = await Item.findOneAndUpdate(
-      { _id: id, 'revision.locked': { $ne: true } },
-      { $set: updates },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!updated) {
-      // Re-check to distinguish "not found" vs "locked"
-      const current = await Item.findById(id).select('revision').lean();
-      if (!current) return res.status(404).json({ message: 'Item not found' });
-      return res.status(403).json({ message: 'Item is locked (final status). Unlock required.' });
-    }
-
-    // Record revision log (non-blocking — failure does not roll back the PATCH)
-    const scoreChanged = updates.score !== undefined && updates.score !== existing.score;
-    const before = {
-      question: existing.question, description: existing.description,
-      score: existing.score, classification: existing.classification, na_available: existing.na_available,
-    };
-    const after = {
-      question: updated.question, description: updated.description,
-      score: updated.score, classification: updated.classification, na_available: updated.na_available,
-    };
-    AuditLog.create({
-      user,
+    const { updated } = await applyItemEdit({
+      id,
+      updates,
+      editTypes: Array.isArray(req.body.edit_types) ? req.body.edit_types : [],
+      rawReason: req.body.reason,
+      user: req.user?.name || 'unknown',
       role: req.user?.role || 'unknown',
-      action: 'patch_item',
-      resource_type: 'item',
-      resource_id: String(id),
-      details: { item_number: existing.item_number, score_changed: scoreChanged },
       ip: req.ip,
-    }).catch(() => {});
-
-    Revision.create({
-      item_number: existing.item_number,
-      area_code: existing.area_code,
-      common_key: existing.common_key,
-      year: existing.year,
-      user,
-      edit_types: Array.isArray(req.body.edit_types) ? req.body.edit_types : [],
-      reason: req.body.reason || '',
-      before,
-      after,
-      status_at_save: existing.revision?.status || 'none',
-      score_changed: scoreChanged,
-    }).catch(err => console.error('[PATCH] Failed to create revision log:', err.message));
+    });
 
     res.json(toResponse(updated));
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ message: err.message });
     serverError(res, err, 'items');
   }
 });

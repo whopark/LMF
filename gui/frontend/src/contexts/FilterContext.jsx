@@ -3,6 +3,19 @@ import { useFilters } from '../hooks/useFilters';
 
 const FilterContext = createContext(null);
 
+// G3: persist 화면 A selection across reloads (Plan SC-8).
+const SELECTION_IDS_KEY = 'lmf_selectedItemIds';
+const SELECTION_OBJS_KEY = 'lmf_selectedItemObjects';
+
+function loadSelection(key, fallback) {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function FilterProvider({ children }) {
   const { filters } = useFilters();
 
@@ -24,13 +37,27 @@ export function FilterProvider({ children }) {
   const [revisedOnly, setRevisedOnly] = useState(false);
   // Search field restriction: '' = all, 'item_number', 'question', 'description'
   const [searchField, setSearchField] = useState('');
+  // G5 Fix: score filter — '' = all, 'null' = 핵심(필수), or numeric string exact match
+  const [scoreFilter, setScoreFilter] = useState('');
+  // Date range filter for last_modified.at (ISO date string or '')
+  const [modifiedAfter, setModifiedAfter] = useState('');
+  const [modifiedBefore, setModifiedBefore] = useState('');
 
   // Stage 1 user identity (Phase 3) — no auth, just records who is editing
   const [selectedUser, setSelectedUser] = useState('');
 
   // Dashboard checkbox selection — item _id → true map (화면 A)
-  const [selectedItemIds, setSelectedItemIds] = useState({});
-  const [selectedItemObjects, setSelectedItemObjects] = useState([]);
+  // G3: lazy-init from localStorage so the selection survives reloads (Plan SC-8).
+  const [selectedItemIds, setSelectedItemIds] = useState(() => loadSelection(SELECTION_IDS_KEY, {}));
+  const [selectedItemObjects, setSelectedItemObjects] = useState(() => loadSelection(SELECTION_OBJS_KEY, []));
+
+  // G3: persist selection on every change so 화면 A is restored after a page reload.
+  useEffect(() => {
+    try { localStorage.setItem(SELECTION_IDS_KEY, JSON.stringify(selectedItemIds)); } catch { /* ignore storage errors */ }
+  }, [selectedItemIds]);
+  useEffect(() => {
+    try { localStorage.setItem(SELECTION_OBJS_KEY, JSON.stringify(selectedItemObjects)); } catch { /* ignore storage errors */ }
+  }, [selectedItemObjects]);
 
   const toggleItemSelection = (item) => {
     setSelectedItemIds(prev => {
@@ -81,6 +108,9 @@ export function FilterProvider({ children }) {
     setClassification('');
     setRevisedOnly(false);
     setSearchField('');
+    setScoreFilter('');
+    setModifiedAfter('');
+    setModifiedBefore('');
     setPage(1);
     clearSelection();
     setHistoryArea('');
@@ -106,6 +136,9 @@ export function FilterProvider({ children }) {
     classification, setClassification,
     revisedOnly, setRevisedOnly,
     searchField, setSearchField,
+    scoreFilter, setScoreFilter,
+    modifiedAfter, setModifiedAfter,
+    modifiedBefore, setModifiedBefore,
     // User identity
     selectedUser, setSelectedUser,
     // History - Tracking
