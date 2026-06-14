@@ -6,6 +6,7 @@
 | yearly-tracking (문항 연도별 추적) | completed | 99% | 2026-06-14 | `yearly-tracking/` |
 | data-integrity (§5 데이터 오염 정제) | completed | ~97% | 2026-06-14 | `data-integrity/` |
 | answer-marker-bleed (§5 잔여 bleed 12건) | completed | ~98% | 2026-06-14 | `answer-marker-bleed/` |
+| subcategory-order (중분류 10코드 통합 §1/§8) | completed | ~99% | 2026-06-15 | `subcategory-order/` |
 
 ---
 
@@ -56,3 +57,16 @@
 - **적용(로컬 DB)**: **12건 question만** — 2025형 `예 (필수)` 제거(2)·2021형 `?` 뒤 `(필수) ∙ 중복` 절단(10, 실설명 description 보존) · 백업 `checklist_items_backup_20260614-3`
 - **요약**: 타깃 가드(`cleanBleed` GUARD)로 bleed 문항만 정제 — 임베드 마커 제거 + 첫 `?` 절단. description/blocks/분류 불변. §5 클러스터 데이터 오염 정제 **완결**.
 - **잔여(선택)**: 다중 `?` 절단 회귀테스트 · 리포트 파일 `bleedRemaining` 기록 · `stat.bleed` 분리
+
+---
+
+## subcategory-order — 중분류 10코드 분류 통합 (스펙 §1/§8)
+
+- **기간**: 2026-06-15
+- **레벨**: Dynamic · **아키텍처**: Option C(10코드 통합) — **B(라벨유지·min-MMM)에서 피벗**(사용자 정정)
+- **결과**: Match Rate **~99%** · SC **5/5 Met** · 백엔드 테스트 **198** · 멱등 실증(재실행 `changed=0`)
+- **문서**: plan · design · analysis · report (4종)
+- **적용(로컬 DB)**: **9,984문항** sub_category를 10코드 라벨로 통합 + order=코드 · 백업 `checklist_items_backup_20260614-5`
+- **요약**: 중분류 93종(노이즈)을 **MMM(문항번호 중간 3자리) 백자리 → 10코드 분류**(01 심사범위…09 안전, 11 제공서비스, 10 검사실이전 예약)로 통합. 엣지: 제공(비숫자)→11·005 기타→06·980→04. 검사특이 ~80종은 06 흡수. 드롭다운 가나다→코드순(`filters.js` aggregate min-order). item_number 기반 멱등.
+- **핵심 가치**: 심사점검표 순서 정합(§1/§8) — "가나다 아닌 점검표 순서".
+- **잔여(차기)**: 검사특이 granularity 복원용 `sub_category_group`/`detail` 분리 · 검사실이전·제공서비스 점검표 PDF 위치 재확인.
