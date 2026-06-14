@@ -1,214 +1,84 @@
 # LMF_all — 다음 세션 진입 가이드
 
-> 2026-05-04 세션 업데이트. 새 세션에서 가장 먼저 읽을 문서.
-
-## ✅ 완료된 검증 부채 (2026-05-04)
-
-### 1. MongoDB 데이터 무결성 확인 ✅
-
-```bash
-# 실행 완료: 9831 items imported, years 2020~2026 확인
-cd gui/backend && node import-data.js
-```
-
-### 2. import-data.js require 가드 ✅
-
-```js
-// f069dd5 커밋으로 적용 완료
-if (require.main === module) {
-  importData();
-}
-```
+> **2026-06-14 갱신.** 새 세션에서 가장 먼저 읽을 문서.
+> 작업 추적이 **SPEC-XXX 방식 → bkit PDCA 사이클**(`docs/archive/`)로 전환됨.
+> 이전 2026-05 SPEC 로그(테스트 도입·라우트 분할·CSS 정리 등)는 git 히스토리 참조.
 
 ---
 
-## ✅ 완료된 SPEC (2026-05-04)
+## 🧭 현재 상태 (2026-06-14)
 
-### SPEC-TEST-INTRO-001 ✅
-
-- **커밋**: `75cd89e test(backend): Vitest + supertest 테스트 프레임워크 도입`
-- **산출물**:
-  - `app.js` — testable Express 구조 분리
-  - `vitest.config.js` — Vitest 설정
-  - `tests/setup.js` — mongodb-memory-server 설정
-  - `tests/api.test.js` — 7개 API 테스트 (filters, items, items/:number)
-- **테스트 명령**: `cd gui/backend && npm run test:run`
-
-### SPEC-TEST-FRONTEND-001 ✅
-
-- **커밋**: `eda36d8 test(frontend): Vitest + React Testing Library 도입`
-- **산출물**:
-  - `vitest.config.js` — jsdom 환경 + React 플러그인
-  - `tests/setup.js` — jest-dom 매처 + matchMedia mock
-  - `tests/FilterContext.test.jsx` — 5개 테스트 (상태 관리, 초기화, 리셋)
-  - `tests/useFilters.test.jsx` — 4개 테스트 (API fetch, 에러 핸들링)
-- **테스트 명령**: `cd gui/frontend && npm run test:run`
-- **전체 테스트**: Backend 14개 + Frontend 9개 = **23개**
-
-### SPEC-ROUTES-SPLIT-001 ✅
-
-- **커밋**: `0e28304 refactor(backend): routes/api.js 도메인별 분할`
-- **산출물**:
-  - `api.js` (12줄) — 라우터 통합 index
-  - `filters.js` (35줄) — 필터 옵션 조회
-  - `items.js` (112줄) — 체크리스트 CRUD
-  - `changes.js` (141줄) — 연도별 변경 비교
-- **Before/After**: 277줄 단일 파일 → 4개 파일 (최대 141줄)
-
-### SPEC-AUTH-001 ✅
-
-- **커밋**: `1644be1 feat(backend): PATCH /api/items/:id API Key 인증 추가`
-- **산출물**:
-  - `middleware/auth.js` — x-api-key 헤더 검증 미들웨어
-  - `routes/items.js` — PATCH에 requireApiKey 적용
-  - `tests/auth.test.js` — 7개 인증 테스트
-- **사용법**: `x-api-key` 헤더에 `API_KEY` 환경변수 값 전달
-- **테스트 현황**: 14개 (기존 7 + 인증 7)
-
-### SPEC-CONTEXT-001 ✅
-
-- **커밋**: `1528b51 refactor(frontend): Sidebar 26-prop drilling → React Context API`
-- **산출물**:
-  - `contexts/FilterContext.jsx` (99줄) — 중앙 상태 관리
-  - `App.jsx` (211줄 → 161줄) — FilterProvider 적용
-  - `Sidebar.jsx` (300줄 → 253줄) — props 26개 → 0개
-- **Before/After**: Sidebar 26-prop drilling → useFilterContext() 직접 접근
-
-### SPEC-DEAD-CSS-001 ✅
-
-- **커밋**: `3e8307e chore(frontend): legacy CSS 693줄 제거`
-- **삭제**:
-  - `styles/legacy/comparison-card.css` (138줄)
-  - `styles/legacy/comparison-doc.css` (278줄)
-  - `styles/legacy/comparison-panels.css` (277줄)
-  - `styles/legacy/README.md`
-- **번들 크기**: 19.64 kB → 11.09 kB (43% 감소)
-
-### SPEC-DESIGN-TOKEN-001 ✅
-
-- **커밋**: `3c4e102 refactor(frontend): 인라인 hex 색상 → CSS 변수 토큰화`
-- **변경**:
-  - `tokens.css` — 3개 토큰 추가 (accent-primary-dark, accent-danger-dark, accent-danger-bg)
-  - 7개 CSS 파일에서 ~90개 인라인 hex → var(--*) 변환
-- **효과**: tokens.css가 유일한 색상 정의 소스, 테마 변경 용이
-
-### SPEC-DATA-CLEANUP-001 ✅
-
-- **커밋**: `706b800 chore(pdf): ETL v1~v3 레거시 파일 10개 정리`
-- **삭제**:
-  - `import_verification_reports.py` (v1)
-  - `import_verification_reports_v2.py`
-  - `import_verification_reports_v3.py`
-  - `migrate_final.py`, `migrate_v2.py`, `upload_clean.py`
-  - `verification_reports.json`, `verification_reports_improved.json`, `verification_reports_v3.json`
-- **유지**: `import_verification_reports_v4.py`, `verification_reports_v4.json` (현재 버전)
-- **효과**: 5260줄 레거시 코드 제거, structure.md 업데이트
-
-### SPEC-PDF-EMBEDDED-REPO-001 ✅
-
-- **조사 결과**: 14개가 아닌 1개 `.git`만 발견 (`pdf/01 검사실운영/.git`)
-- **정체**: 다른 프로젝트(Docker/PostgreSQL/FastAPI)의 복사 잔재
-  - COMMIT_EDITMSG: "fix: Docker 배포 시 발견된 SQL 뷰, CSP, 라우터 버그 수정"
-  - Co-Authored-By: Claude Opus 4.6
-  - 리모트 없음, 로컬 전용
-- **조치**: `rm -rf "pdf/01 검사실운영/.git"` 삭제 완료
-- **커밋**: 없음 (`pdf/*/`는 gitignored)
+- **데이터**: 로컬 MongoDB `lab_accreditation/checklist_items`에 **9,984문항(2020~2026)** 적재(2026 = 1,635).
+  셋업: scoop `mongod`, dbpath `C:/Users/whopa/mongodb-data`.
+- **앱 스택**: backend Express(:5000) + frontend React/Vite(:5173) + mongod(:27017). dev 로그인 `admin / admin123`.
+- **git**: master에 이번 세션 **8커밋 추가**, `origin/master` 대비 **8 ahead (미push)**.
+  checklist 본문 JSON·PDF는 gitignore로 git 제외(저작권).
 
 ---
 
-## 📋 후속 SPEC 후보 (ICE 순위)
+## ✅ 2026-06 주요 완료 (git 히스토리 기준)
 
-| Rank | SPEC ID (가칭) | 설명 | 의존 | 예상 크기 |
-|---|---|---|---|---|
-| ~~1~~ | ~~SPEC-TEST-INTRO-001~~ | ~~Vitest + supertest 도입~~ | - | ✅ 완료 |
-| ~~2~~ | ~~SPEC-ROUTES-SPLIT-001~~ | ~~api.js 분할~~ | - | ✅ 완료 |
-| ~~3~~ | ~~SPEC-AUTH-001~~ | ~~PATCH 인증 추가~~ | - | ✅ 완료 |
-| ~~4~~ | ~~SPEC-CONTEXT-001~~ | ~~Sidebar 26-prop drilling → React Context~~ | - | ✅ 완료 |
-| ~~5~~ | ~~SPEC-DEAD-CSS-001~~ | ~~legacy comparison CSS 693줄 제거~~ | - | ✅ 완료 |
-| ~~6~~ | ~~SPEC-DESIGN-TOKEN-001~~ | ~~인라인 hex → CSS 변수 토큰화~~ | - | ✅ 완료 |
-| ~~7~~ | ~~SPEC-DATA-CLEANUP-001~~ | ~~pdf/ ETL v1~v3 파일 정리~~ | - | ✅ 완료 |
-| ~~8~~ | ~~SPEC-PDF-EMBEDDED-REPO-001~~ | ~~pdf/01 임베디드 .git 조사 + 정리~~ | - | ✅ 완료 |
+- **Phase 1~7** (`74e2a57`…`92578b1`): 평탄 데이터 모델 → ETL v9 정합성 → 대시보드 검색/필터 + 공통문항 배지
+  → 개정 워크플로우/수정이력/공통문항 일괄 → 화면 A/B + DiffText + 워크리스트 → Excel/Word 내보내기 + 검색 고도화
+  → JWT 역할권한 + 감사로그.
+- **보안 수정**(`e8a4a80`), **개정 워크플로우 P0 갭 8종**(`529f671`).
+- **PDCA 2사이클 아카이브**(`docs/archive/2026-06/`): `revision-workflow`, `yearly-tracking` (PRD/plan/design/analysis/report).
 
-**모든 후속 SPEC 완료!** 새로운 기능 개발 또는 추가 리팩토링이 필요하면 알려주세요.
+### 이번 세션(2026-06-14) — 미커밋 워킹트리 → 관심사별 8커밋 정리
+
+| # | 커밋 | 내용 |
+|---|------|------|
+| 1 | `chore` | gitignore 추가 (coverage/reports/.bkit/agent-memory/checklist data) |
+| 2 | `feat(dashboard)` | 검색·필터 고도화(배점/수정자/수정유형/수정일자) + 문항편집 분류선택·분야특이설명 + 설명 불릿 렌더 |
+| 3 | `feat(yearly-tracking)` | 화면 B 6필드·verbatim 수정사유 연동 + **1493 렌더 페이지네이션(50/p)·stagger 캡** (성능 프리즈 해소) |
+| 4 | `feat(export)` | PDF 내보내기(items/revisions) + 한글폰트 NotoSansKR |
+| 5 | `feat(scripts)` | import/diff/rollback 데이터 툴링(백업+전체교체) |
+| 6 | `test(revision)` | 개정 워크플로우 테스트 보강 |
+| 7 | `docs(pdca)` | PDCA 산출물 아카이브 |
+| 8 | `chore(pdf)` | ETL v9 스크립트·매뉴얼 보정 갱신 + 종합검증 스키마 md 제거 |
+
+> 검증: 연도별 추적 화면 브라우저 구동 + `vite build`(2056 modules, 0 error) 통과 후 커밋.
 
 ---
 
-## 🔍 조사 필요한 발견들
+## 🔭 열린 항목 / 다음 후보
 
-### ~~A. `pdf/01 검사실운영` 임베디드 git repo~~ ✅ 해결
-
-~~조사 결과 14개가 아닌 1개만 존재.~~ 다른 프로젝트(Docker/PostgreSQL/FastAPI) 복사 잔재로 확인, 삭제 완료.
-
-### B. LLM rate limit 값 (분당 20회) 적정성
-
-SPEC-CLEANUP-001 Open Issue Q-COMP-04. 임의값으로 시작했음. 실제 사용 패턴 1주일 관찰 후 조정.
-
-### ~~C. autopus.yaml `methodology.enforce: false` 복원 시점~~ ✅ 해결
-
-`enforce: true`로 복원 완료. Vitest + supertest 14개 테스트 도입됨 (SPEC-TEST-INTRO-001).
-
-### ~~D. README.md 부재~~ ✅ 해결
-
-`9dd0945 docs: README.md 추가` — product.md + ARCHITECTURE.md 기반으로 작성 완료.
-
-### E. License 결정
-
-현재 미정. 의료/임상 도메인 + private repo이지만 향후 공개 가능성 대비 결정 필요. MIT/Apache-2.0/proprietary 중 선택.
+| 우선 | 항목 | 메모 |
+|---|---|---|
+| **P1** | **§5 데이터 오염 (신규)** | 2025 데이터셋 질문 본문에 `예 (필수)` bleed → year-diff `수정` 카운트 부풀림(1335). 브라우저 검증 중 발견. PDCA 사이클 후보(`/bkit:pdca pm data-integrity` 등). |
+| P2 | **8커밋 push 여부** | `origin/master` 8 ahead. 공개 시 checklist data 제외 확인됨. |
+| P3 | **checklist data git 정책 확정** | `pdf/checklist_items_*.json` 현재 gitignore hold. LFS 커밋 vs 영구 제외 결정 필요. |
+| P3 | **License 결정 (구 E)** | 미정. 의료/임상 + private. MIT/Apache-2.0/proprietary 택1. |
+| P4 | **LLM rate limit (구 B)** | 분당 20회 임의값. 실사용 관찰 후 조정. |
 
 ---
 
 ## 🚀 다음 세션 진입점
 
-새 세션에서 처음 실행할 명령어 후보:
-
 ```bash
-# 1. 테스트 확인 (전체 23개)
-cd gui/backend && npm run test:run   # 14개
-cd gui/frontend && npm run test:run  # 9개
+# 1. 스택 기동
+mongod --dbpath "C:/Users/whopa/mongodb-data" --port 27017 --bind_ip 127.0.0.1 --quiet
+cd gui/backend && npm start           # :5000
+cd gui/frontend && npm run dev         # :5173  (로그인 admin/admin123)
 
-# 2. 새 기능 또는 리팩토링 요청
-# 모든 후속 SPEC이 완료되었습니다. 새로운 작업을 요청하세요.
+# 2. 테스트
+cd gui/backend && npm run test:run     # tests/*.test.js  (17개 파일)
+cd gui/frontend && npm run test:run    # tests/*.test.jsx (6개 파일)
+#   ※ 정확한 케이스 수는 위 명령으로 확인
+
+# 3. PDCA 상태
+/bkit:pdca status
 ```
-
----
-
-## 📊 세션 요약
-
-### 2026-05-03 세션
-- **commits**: 12개 (master에 총 15개)
-- **GitHub push**: `https://github.com/whopark/LMF` (private, LFS 1 객체)
-- **주요 산출물**:
-  - SPEC-CLEANUP-001 (4개 파일, status: implemented)
-  - `/auto setup` 컨텍스트 7개 파일 (ARCHITECTURE.md + .autopus/project/*)
-  - useFilters hook 추출 (refactor 사례)
-  - 5개 dead code/orphan 정리
-
-### 2026-05-04 세션
-- **commits**: 15개 (master에 총 30개)
-- **주요 산출물**:
-  - 검증 부채 해소 (MongoDB 재import + require 가드)
-  - SPEC-TEST-INTRO-001 완료 (Backend Vitest + supertest, 14개 테스트)
-  - SPEC-TEST-FRONTEND-001 완료 (Frontend Vitest + RTL, 9개 테스트)
-  - SPEC-ROUTES-SPLIT-001 완료 (api.js 277줄 → 4파일 분할)
-  - SPEC-AUTH-001 완료 (API Key 인증 + 7개 테스트)
-  - SPEC-CONTEXT-001 완료 (Sidebar 26-prop → React Context)
-  - SPEC-DEAD-CSS-001 완료 (legacy CSS 693줄 제거, 번들 43% 감소)
-  - SPEC-DESIGN-TOKEN-001 완료 (인라인 hex → CSS 변수 토큰화)
-  - SPEC-DATA-CLEANUP-001 완료 (ETL v1~v3 파일 5260줄 정리)
-  - SPEC-PDF-EMBEDDED-REPO-001 완료 (로컬 .git 1개 정리)
-  - README.md 추가, TDD enforce 복원
 
 ---
 
 ## ⚠️ 잊지 말 것
 
-- 한국 임상병리학회 점검표 PDF는 절대 git에 넣지 않는다 (저작권). gitignore가 보호 중이지만 향후 패턴 추가 시 검증 필요.
-- LFS 한도 무료 1GB. checklist_items_final.json은 11MB로 여유 있지만 향후 데이터 증가 시 모니터링.
-- `autopus-adk/`는 형제 repo. parent에서 추적하지 않는다.
-- 테스트 실행:
-  - Backend: `cd gui/backend && npm run test:run` (14개)
-  - Frontend: `cd gui/frontend && npm run test:run` (9개)
-  - **전체: 23개 테스트**
-- PATCH 요청 시 `x-api-key` 헤더 필요
+- **PDF·checklist 본문 절대 git 금지**(저작권). `pdf/*/`·`pdf/checklist_items_*.json`·`*.pdf` gitignore 보호 중.
+  `git add pdf/` 같은 일괄 add 금지 — **명시 경로만** 스테이징.
+- `.bkit/`·`.claude/agent-memory/`·`gui/backend/coverage/`·`gui/backend/reports/`는 gitignore(런타임/생성물, 로컬 보존).
+- PATCH/민감 작업 요청 시 인증 필요(JWT viewer+ 또는 `x-api-key`).
+- `autopus-adk/`는 형제 repo, parent에서 추적 안 함.
+- 날짜/요일/기간 계산은 절대 암산 금지 — `date`/`python3` 사용.
 
 🐙
