@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { getDisplayData } from '../utils/helpers.jsx';
-import SideBySideItem from './SideBySideItem.jsx';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { getDisplayData, API_BASE } from '../utils/helpers.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import CompareView from './CompareView.jsx';
 import DiffText from './DiffText.jsx';
 import RevisionPanel from './RevisionPanel.jsx';
 
@@ -32,57 +34,28 @@ function HistoryView({
   );
 }
 
-function CompareView({ loading, changesData, compareYear, compareArea }) {
-  return (
-    <>
-      <header className="header" style={{ marginBottom: '2rem' }}>
-        <div>
-          <h2 style={{ margin: 0 }}>연도별 변경 사항 비교</h2>
-          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-            {compareYear ? `${compareYear - 1}년 → ${compareYear}년 변경 내역` : '비교할 년도를 선택하세요'}
-            {compareArea && ` (${compareArea})`}
-          </p>
-        </div>
-        {changesData && (
-          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#94a3b8' }}>
-            <span>변경: <strong style={{ color: '#38bdf8' }}>{changesData.totalChanges}</strong></span>
-            <span>신규: <strong style={{ color: '#38bdf8' }}>{changesData.newItems}</strong></span>
-            <span>수정: <strong style={{ color: '#f8fafc' }}>{changesData.modifiedItems}</strong></span>
-            <span>삭제: <strong style={{ color: '#f87171' }}>{changesData.deletedItems}</strong></span>
-          </div>
-        )}
-      </header>
-      {loading ? (
-        <div className="loader-container"><div className="loader">변경 사항 분석 중...</div></div>
-      ) : changesData && changesData.changes.length > 0 ? (
-        <div className="sbs-container">
-          <div className="sbs-header">
-            <div className="sbs-header-panel left"><span className="sbs-year-badge prev">{changesData.previousYear}년</span></div>
-            <div className="sbs-header-panel right"><span className="sbs-year-badge curr">{changesData.targetYear}년</span></div>
-          </div>
-          <div className="sbs-items">
-            {changesData.changes.map((change, idx) => (
-              <SideBySideItem key={`${change.item_number}-${idx}`} change={change} idx={idx} />
-            ))}
-          </div>
-        </div>
-      ) : compareYear ? (
-        <div className="placeholder-text">선택한 기간에 변경된 문항이 없습니다.</div>
-      ) : (
-        <div className="placeholder-text">왼쪽 사이드바에서 비교할 년도를 선택하세요.</div>
-      )}
-    </>
-  );
-}
-
 function TrackView({ loading, historyArea, selectedHistoryNumber, historyItems, setSelectedItem }) {
   // trackMode: 'compare' = 1:1 직전 연도 vs 최신, 'timeline' = 전체 연도 나열
   const [trackMode, setTrackMode] = useState('compare');
   const [revisionTarget, setRevisionTarget] = useState(null);
+  const { authHeader } = useAuth();
+  const [verbatimReason, setVerbatimReason] = useState('');
 
   const sortedItems = [...historyItems].sort((a, b) => b.metadata.year - a.metadata.year);
   const latest = sortedItems[0];
   const previous = sortedItems[1];
+
+  // G-Y4: 최신 Revision.reason(verbatim) 조회 → ComparisonTable에 전달 (화면=Export 동일 소스)
+  useEffect(() => {
+    if (!selectedHistoryNumber) { setVerbatimReason(''); return; }
+    axios.get(`${API_BASE}/revisions`, {
+      params: { item_number: selectedHistoryNumber, limit: 1 },
+      headers: authHeader(),
+    })
+      .then(res => setVerbatimReason(res.data?.revisions?.[0]?.reason || ''))
+      .catch(() => setVerbatimReason(''));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedHistoryNumber]);
 
   return (
     <>
@@ -112,7 +85,7 @@ function TrackView({ loading, historyArea, selectedHistoryNumber, historyItems, 
       ) : trackMode === 'compare' && latest ? (
         <div style={{ display: 'flex', gap: '1.5rem' }}>
           <div style={{ flex: 1 }}>
-            <ComparisonTable latest={latest} previous={previous} />
+            <ComparisonTable latest={latest} previous={previous} reason={verbatimReason} />
           </div>
           {latest && (
             <div style={{ width: '280px', flexShrink: 0 }}>
@@ -142,9 +115,15 @@ function TrackView({ loading, historyArea, selectedHistoryNumber, historyItems, 
   );
 }
 
-function ComparisonTable({ latest, previous }) {
+function ComparisonTable({ latest, previous, reason }) {
   const latestDisplay = getDisplayData(latest);
   const prevDisplay = previous ? getDisplayData(previous) : null;
+  // G-Y4/G-Y5: 배점·분류 비교 데이터 (Item.about_item)
+  const prevScore = previous?.about_item?.score;
+  const currScore = latest.about_item?.score;
+  const prevType = previous?.about_item?.item_type || '';
+  const currType = latest.about_item?.item_type || '';
+  const scoreText = s => (s !== null && s !== undefined ? `${s}점` : '');
 
   return (
     <div className="track-comparison-table">
@@ -170,6 +149,43 @@ function ComparisonTable({ latest, previous }) {
               ? <DiffText oldText={prevDisplay.description} newText={latestDisplay.description} />
               : latestDisplay.description}
           </div>
+        </div>
+      )}
+      {/* G-Y4/G-Y5: 배점 */}
+      <div className="track-compare-row" style={{ marginTop: '0.5rem' }}>
+        <div className="track-compare-col prev" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>배점: {scoreText(prevScore) || '—'}</div>
+        <div className="track-compare-col curr" style={{ fontSize: '0.85rem' }}>
+          배점: {previous ? <DiffText oldText={scoreText(prevScore)} newText={scoreText(currScore)} /> : (scoreText(currScore) || '—')}
+        </div>
+      </div>
+      {/* G-Y4/G-Y5: 분류 */}
+      <div className="track-compare-row">
+        <div className="track-compare-col prev" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>분류: {prevType || '—'}</div>
+        <div className="track-compare-col curr" style={{ fontSize: '0.85rem' }}>
+          분류: {previous ? <DiffText oldText={prevType} newText={currType} /> : (currType || '—')}
+        </div>
+      </div>
+      {/* G-A1: 분야특이 설명 (SC-Y4 6필드) */}
+      {(latest.about_item?.field_specific_description || previous?.about_item?.field_specific_description) && (
+        <div className="track-compare-row">
+          <div className="track-compare-col prev" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>분야특이: {previous?.about_item?.field_specific_description || '—'}</div>
+          <div className="track-compare-col curr" style={{ fontSize: '0.85rem' }}>
+            분야특이: {previous
+              ? <DiffText oldText={previous.about_item?.field_specific_description || ''} newText={latest.about_item?.field_specific_description || ''} />
+              : (latest.about_item?.field_specific_description || '—')}
+          </div>
+        </div>
+      )}
+      {/* G-A1: 해당없음 (SC-Y4 6필드) */}
+      <div className="track-compare-row">
+        <div className="track-compare-col prev" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>해당없음: {previous ? (previous.na_available ? '적용' : '없음') : '—'}</div>
+        <div className="track-compare-col curr" style={{ fontSize: '0.85rem' }}>해당없음: {latest.na_available ? '적용' : '없음'}</div>
+      </div>
+      {/* G-Y4: verbatim 수정사유 (화면 = Export 동일 소스, SC-Y2) */}
+      {reason && (
+        <div className="track-compare-row" style={{ marginTop: '0.5rem' }}>
+          <div className="track-compare-col prev" style={{ fontSize: '0.85rem', color: '#94a3b8' }}>수정사유</div>
+          <div className="track-compare-col curr" style={{ fontSize: '0.85rem' }}>{reason}</div>
         </div>
       )}
     </div>

@@ -15,6 +15,11 @@ function buildDiffLines(prev, curr) {
   if (prev?.description && curr?.description && prev.description !== curr.description) {
     lines.push({ field: '설명', prev: prev.description, curr: curr.description, useDiff: true });
   }
+  // G-A1: 분야특이 설명·해당없음 행 추가 (SC-Y4 6필드 화면 완전 충족)
+  if ((prev?.field_specific_description || '') !== (curr?.field_specific_description || ''))
+    lines.push({ field: '분야특이설명', prev: prev?.field_specific_description, curr: curr?.field_specific_description, useDiff: true });
+  if ((prev?.na_available || false) !== (curr?.na_available || false))
+    lines.push({ field: '해당없음', prev: prev?.na_available ? '적용' : '없음', curr: curr?.na_available ? '적용' : '없음' });
   return lines;
 }
 
@@ -27,32 +32,36 @@ function SideBySideItem({ change, idx }) {
   const badgeText = isNew ? '신규' : isDeleted ? '삭제' : '수정';
   const diffLines = (!isNew && !isDeleted) ? buildDiffLines(prev, curr) : [];
 
-  const [reason, setReason] = useState(null);
-  const [reasonLoading, setReasonLoading] = useState(false);
+  // G-Y2: official 수정사유는 verbatim Revision.reason (diff-core가 change.current.reason으로 첨부).
+  const verbatimReason = curr?.reason || '';
+  const [draft, setDraft] = useState('');
+  const [draftLoading, setDraftLoading] = useState(false);
 
-  const generateReason = async () => {
-    setReasonLoading(true);
+  // Design Ref: §6 — LLM을 '초안 제안'으로 격하. 결과는 편집 textarea(미저장)로만 흐른다.
+  // 실제 저장(Revision.reason 반영)은 화면 B 편집(RevisionPanel)에서 수행한다.
+  const suggestDraft = async () => {
+    setDraftLoading(true);
     try {
       const res = await axios.post(`${API_BASE}/llm/reason`, {
         previous: prev, current: curr,
         changeType: change.change_type, summary: change.summary,
       });
-      setReason(res.data.reason);
+      setDraft(res.data.reason);
     } catch (err) {
       if (err.response?.data?.code === 'API_KEY_NOT_CONFIGURED') {
-        setReason('⚠️ ANTHROPIC_API_KEY가 설정되지 않았습니다.');
+        setDraft('⚠️ ANTHROPIC_API_KEY가 설정되지 않았습니다.');
       } else if (err.response?.status === 429) {
-        setReason('⏱️ 요청이 너무 많습니다. 잠시 후 다시 시도하세요.');
+        setDraft('⏱️ 요청이 너무 많습니다. 잠시 후 다시 시도하세요.');
       } else {
-        setReason('수정사유 생성에 실패했습니다.');
+        setDraft('초안 제안에 실패했습니다.');
       }
     } finally {
-      setReasonLoading(false);
+      setDraftLoading(false);
     }
   };
 
   return (
-    <motion.div className="sbs-item" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.02 }}>
+    <motion.div className="sbs-item" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(idx, 12) * 0.02 }}>
       <div className="sbs-item-header">
         <span className="sbs-item-number">{change.item_number}</span>
         <span className={`sbs-badge ${badgeClass}`}>{badgeText}</span>
@@ -100,13 +109,30 @@ function SideBySideItem({ change, idx }) {
         </>)}
       </div>
       <div className="sbs-reason-bar">
-        {reason ? (
-          <div className="sbs-reason-text">{reason}</div>
-        ) : (
-          <button className="sbs-reason-btn" onClick={generateReason} disabled={reasonLoading}>
-            {reasonLoading ? '분석 중...' : '🤖 수정사유 생성'}
-          </button>
+        {/* G-Y2: verbatim 수정사유 (Revision.reason) — 화면과 Export가 동일 소스 (SC-Y2) */}
+        {verbatimReason && (
+          <div className="sbs-reason-text">
+            <span className="sbs-field-label">수정사유</span> {verbatimReason}
+          </div>
         )}
+        {/* G-Y2: LLM은 '초안 제안'으로 격하 (미저장). 저장은 화면 B 편집(RevisionPanel)에서. */}
+        <div className="sbs-draft">
+          <button className="sbs-reason-btn" onClick={suggestDraft} disabled={draftLoading}>
+            {draftLoading ? '분석 중...' : '🤖 초안 제안'}
+          </button>
+          {draft && (
+            <>
+              <textarea
+                className="sbs-draft-input"
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                rows={2}
+                aria-label="수정사유 초안 (미저장)"
+              />
+              <div className="sbs-draft-hint">초안(미저장) — 저장하려면 화면 B 편집의 수정사유 저장을 사용하세요</div>
+            </>
+          )}
+        </div>
       </div>
     </motion.div>
   );
