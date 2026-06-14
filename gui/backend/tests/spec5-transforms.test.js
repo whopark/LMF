@@ -3,6 +3,7 @@ import { splitMerged } from '../scripts/lib/spec5/splitMerged.js';
 import { buildClassMap } from '../scripts/lib/spec5/classMap.js';
 import { backfillClassification } from '../scripts/lib/spec5/backfillClassification.js';
 import { buildBlocks } from '../scripts/lib/spec5/buildBlocks.js';
+import { cleanBleed } from '../scripts/lib/spec5/cleanBleed.js';
 import { applyPatches } from '../scripts/lib/spec5/index.js';
 
 // Design Ref: §3 — pure transforms, idempotent guards. Plan SC-1/2/3.
@@ -94,6 +95,27 @@ describe('buildBlocks (SC-3: description → blocks)', () => {
   });
 });
 
+describe('cleanBleed (SC-B1: 답안마커 bleed 정제)', () => {
+  it('removes embedded "예 (필수)" (2025형)', () => {
+    expect(cleanBleed('검사 분야에 대해 인증 예 (필수) 심사를 받는가?'))
+      .toEqual({ question: '검사 분야에 대해 인증 심사를 받는가?' });
+  });
+  it('truncates "?-뒤 (필수) ∙ 중복" cruft (2021형)', () => {
+    expect(cleanBleed('기본요건을 갖추고 있는가? (필수) ∙ 검사실의 과장은 다음의'))
+      .toEqual({ question: '기본요건을 갖추고 있는가?' });
+  });
+  it('returns null when no bleed marker (타깃 한정)', () => {
+    expect(cleanBleed('일반적인 질문입니다?')).toBeNull();
+  });
+  it('does NOT touch 2020-merge style (? 뒤 ∙, no marker)', () => {
+    expect(cleanBleed('받는가? ∙ 별도의 검사실을 포함하여')).toBeNull();
+  });
+  it('is idempotent', () => {
+    const once = cleanBleed('인증 예 (필수) 심사를 받는가?');
+    expect(cleanBleed(once.question)).toBeNull();
+  });
+});
+
 describe('applyPatches (index: 합성 + 멱등)', () => {
   const map = new Map([['010.090', 'C']]);
   it('produces combined patch for a merged dirty doc', () => {
@@ -108,5 +130,9 @@ describe('applyPatches (index: 합성 + 멱등)', () => {
   it('returns null for an already-clean doc (SC-5: 불변/멱등)', () => {
     const clean = { question: 'clean?', description: '∙ x', classification: 'C', common_key: '010.090', blocks: [{ type: 'bullet', content: ['x'] }] };
     expect(applyPatches(clean, map)).toBeNull();
+  });
+  it('cleans bleed on a doc with populated description (question-only)', () => {
+    const doc = { question: '인증 예 (필수) 심사를 받는가?', description: '∙ x', classification: 'C', common_key: '010.090', blocks: [{ type: 'bullet', content: ['x'] }] };
+    expect(applyPatches(doc, map)).toEqual({ question: '인증 심사를 받는가?' });
   });
 });

@@ -24,6 +24,8 @@ const BATCH = 500;
 const REPORTS_DIR = path.join(__dirname, '../reports');
 const MERGED_Q = { $and: [{ $or: [{ description: '' }, { description: null }, { description: { $exists: false } }] }, { question: /[∙•]/ }] };
 const UNCLASSIFIED_Q = { $or: [{ classification: '' }, { classification: null }, { classification: { $exists: false } }] };
+// §5 잔여: 답안마커 bleed (cleanBleed GUARD와 동일 패턴) — SC-B1 증거.
+const BLEED_Q = { question: { $regex: '예\\s*\\(\\s*(?:필수|필요|기본)\\s*\\)|\\?\\s*\\(\\s*(?:필수|필요|기본)\\s*\\)' } };
 
 // Core migration over an already-connected DB. Pure of connect/backup/disconnect
 // so tests can drive it against an in-memory replset.
@@ -82,7 +84,7 @@ async function main() {
 
   if (args.apply) {
     console.log(`[spec5] bulkWrite modified=${r.written}`);
-    console.log(`[spec5] POST mergedRemaining=${r.post.mergedRemaining} unclassifiedRemaining=${r.post.unclassifiedRemaining} blocksCoverage=${r.post.blocksCoverage} totalUnchanged=${r.post.totalOk}`);
+    console.log(`[spec5] POST mergedRemaining=${r.post.mergedRemaining} unclassifiedRemaining=${r.post.unclassifiedRemaining} bleedRemaining=${r.post.bleedRemaining} blocksCoverage=${r.post.blocksCoverage} totalUnchanged=${r.post.totalOk}`);
     if (backupName) console.log(`[spec5] rollback: node scripts/rollback-items.js --from ${backupName}`);
     writeReport(args, r.stat, r.samples, { backupName, written: r.written, ...r.post }, r.backfill);
   } else {
@@ -94,9 +96,10 @@ async function main() {
 
 async function verifyMetrics(total0) {
   const withDesc = { description: { $nin: ['', null], $exists: true } };
-  const [mergedRemaining, unclassifiedRemaining, descCount, descNoBlocks, total1] = await Promise.all([
+  const [mergedRemaining, unclassifiedRemaining, bleedRemaining, descCount, descNoBlocks, total1] = await Promise.all([
     Item.countDocuments(MERGED_Q),
     Item.countDocuments(UNCLASSIFIED_Q),
+    Item.countDocuments(BLEED_Q),
     Item.countDocuments(withDesc),
     Item.countDocuments({ ...withDesc, $or: [{ blocks: { $exists: false } }, { blocks: null }, { blocks: { $size: 0 } }] }),
     Item.countDocuments({}),
@@ -104,6 +107,7 @@ async function verifyMetrics(total0) {
   return {
     mergedRemaining,
     unclassifiedRemaining,
+    bleedRemaining,
     blocksCoverage: descCount ? `${descCount - descNoBlocks}/${descCount}` : 'n/a',
     totalOk: total1 === total0,
   };

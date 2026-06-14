@@ -62,4 +62,24 @@ describe('spec5 migration (integration)', () => {
     const a = await Item.findOne({ item_number: '01.010.020', year: 2020 }).lean();
     expect(a.description).toBe(''); // unchanged
   });
+
+  it('cleans answer-marker bleed (question-only), bleedRemaining=0', async () => {
+    await Item.create([
+      // 2025형: "예 (필수)" 임베드
+      { item_number: '01.010.022', area_code: '01', year: 2025, question: '인증 예 (필수) 심사를 받는가?', description: '∙ x', classification: 'C', blocks: [{ type: 'bullet', content: ['x'] }] },
+      // 2021형: '?' 뒤 (필수) ∙ 중복 — 실설명은 description에 보존
+      { item_number: '01.702.050', area_code: '01', year: 2021, question: '갖추고 있는가? (필수) ∙ 중복설명', description: '∙ 실설명', classification: 'R', blocks: [{ type: 'bullet', content: ['실설명'] }] },
+    ]);
+    const r = await runMigration({ apply: true });
+    expect(r.post.bleedRemaining).toBe(0);
+
+    const a = await Item.findOne({ item_number: '01.010.022', year: 2025 }).lean();
+    expect(a.question).toBe('인증 심사를 받는가?');
+    expect(a.description).toBe('∙ x'); // question-only
+    expect(a.blocks).toEqual([{ type: 'bullet', content: ['x'] }]);
+
+    const b = await Item.findOne({ item_number: '01.702.050', year: 2021 }).lean();
+    expect(b.question).toBe('갖추고 있는가?');
+    expect(b.description).toBe('∙ 실설명'); // unchanged
+  });
 });
