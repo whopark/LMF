@@ -89,5 +89,7 @@ gui/backend/reports/
 # Agent memory (local learning state, not shared across machines)
 .claude/agent-memory/
 
-# Parsed checklist data — copyright (한국 임상병리학회 점검표 본문). Held local.
+# Parsed checklist data — copyright (한국 임상병리학회 점검표 본문). Held local,
+# EXCEPT the canonical flat_v2 (9,984 items) tracked via LFS for reproducibility.
 pdf/checklist_items_*.json
+!pdf/checklist_items_flat_v2.json

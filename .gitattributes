@@ -1,1 +1,1 @@
-pdf/checklist_items_final.json filter=lfs diff=lfs merge=lfs -text
+pdf/checklist_items_flat_v2.json filter=lfs diff=lfs merge=lfs -text
