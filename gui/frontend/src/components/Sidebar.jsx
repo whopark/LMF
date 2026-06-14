@@ -107,6 +107,7 @@ function DashboardFilters() {
     selectedSubCat, setSelectedSubCat,
     classification, setClassification,
     revisedOnly, setRevisedOnly,
+    scoreFilter, setScoreFilter,
     setPage,
   } = useFilterContext();
 
@@ -147,6 +148,19 @@ function DashboardFilters() {
           <option value="C">핵심 (C)</option>
           <option value="R">필요 (R)</option>
           <option value="B">기본 (B)</option>
+        </select>
+      </div>
+
+      <div className="filter-group">
+        <label className="filter-label"><Filter size={14} style={{ marginRight: 6 }} /> 배점 필터</label>
+        <select className="select-input" value={scoreFilter}
+          onChange={e => { setScoreFilter(e.target.value); setPage(1); }}>
+          <option value="">전체 배점</option>
+          <option value="null">핵심 (필수, 배점 없음)</option>
+          <option value="2">2점</option>
+          <option value="5">5점</option>
+          <option value="10">10점</option>
+          <option value="20">20점</option>
         </select>
       </div>
 

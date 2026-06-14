@@ -14,6 +14,9 @@ const SEARCH_FIELDS = [
   { value: 'item_number', label: '문항번호' },
   { value: 'question', label: '문항 키워드' },
   { value: 'description', label: '설명 키워드' },
+  { value: 'modifier', label: '수정자' },
+  { value: 'edit_type', label: '수정유형' },
+  { value: 'modified_date', label: '수정일자' },
 ];
 
 // C3: Download via blob to keep auth token in headers (not URL querystring).
@@ -42,6 +45,8 @@ function DashboardView({ items, loading, setSelectedItem }) {
     page, setPage, totalPages,
     selectedItemIds, toggleItemSelection,
     selectedYear, selectedArea,
+    modifiedAfter, setModifiedAfter,
+    modifiedBefore, setModifiedBefore,
   } = useFilterContext();
 
   const exportParams = { year: selectedYear, area: selectedArea };
@@ -59,17 +64,41 @@ function DashboardView({ items, loading, setSelectedItem }) {
           >
             {SEARCH_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
           </select>
-          <input
-            type="text"
-            className="search-input"
-            style={{ flex: 1 }}
-            placeholder={searchField === 'item_number' ? '문항번호 검색 (예: 01.010)' :
-              searchField === 'question' ? '문항 키워드 검색...' :
-              searchField === 'description' ? '설명 키워드 검색...' :
-              '문항번호, 질문 또는 설명 검색...'}
-            value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-          />
+          {searchField === 'modified_date' ? (
+            <>
+              <input
+                type="date"
+                className="search-input"
+                style={{ width: '148px', flex: 'none' }}
+                title="수정일 시작 (이후)"
+                value={modifiedAfter}
+                onChange={e => { setModifiedAfter(e.target.value); setPage(1); }}
+              />
+              <span style={{ color: '#64748b', fontSize: '0.85rem', userSelect: 'none' }}>~</span>
+              <input
+                type="date"
+                className="search-input"
+                style={{ width: '148px', flex: 'none' }}
+                title="수정일 종료 (이전)"
+                value={modifiedBefore}
+                onChange={e => { setModifiedBefore(e.target.value); setPage(1); }}
+              />
+            </>
+          ) : (
+            <input
+              type="text"
+              className="search-input"
+              style={{ flex: 1 }}
+              placeholder={searchField === 'item_number' ? '문항번호 검색 (예: 01.010)' :
+                searchField === 'question' ? '문항 키워드 검색...' :
+                searchField === 'description' ? '설명 키워드 검색...' :
+                searchField === 'modifier' ? '수정자 이름 검색...' :
+                searchField === 'edit_type' ? '수정유형 코드 검색 (예: 문항수정, 설명수정)...' :
+                '문항번호, 질문 또는 설명 검색...'}
+              value={searchTerm}
+              onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
+            />
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

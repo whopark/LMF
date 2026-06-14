@@ -127,6 +127,43 @@ describe('GET /api/items — combined filters', () => {
   });
 });
 
+// ─── G5: Score filter ────────────────────────────────────────────────────
+describe('GET /api/items?score_null=true (G5)', () => {
+  beforeEach(async () => {
+    await Item.create([
+      { ...baseItem, item_number: '01.010.010', classification: 'C', score: null, question: '핵심문항A' },
+      { ...baseItem, item_number: '01.010.011', classification: 'R', score: 10, question: '필요문항B' },
+      { ...baseItem, item_number: '01.010.012', classification: 'B', score: 5, question: '기본문항C' },
+    ]);
+  });
+
+  it('returns only null-score (핵심/필수) items when score_null=true', async () => {
+    const res = await request(app).get('/api/items').query({ score_null: 'true' });
+    expect(res.status).toBe(200);
+    expect(res.body.items.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.items.every(i => i.about_item.score === null || i.about_item.score === undefined)).toBe(true);
+  });
+
+  it('score_min and score_max filter numeric range', async () => {
+    const res = await request(app).get('/api/items').query({ score_min: '5', score_max: '5' });
+    expect(res.status).toBe(200);
+    expect(res.body.items.length).toBe(1);
+    expect(res.body.items[0].about_item.question).toBe('기본문항C');
+  });
+
+  it('score_min=10 returns items with score >= 10', async () => {
+    const res = await request(app).get('/api/items').query({ score_min: '10' });
+    expect(res.status).toBe(200);
+    expect(res.body.items.every(i => i.about_item.score >= 10)).toBe(true);
+  });
+
+  it('no score filter returns all items', async () => {
+    const res = await request(app).get('/api/items');
+    expect(res.status).toBe(200);
+    expect(res.body.items.length).toBe(3);
+  });
+});
+
 describe('GET /api/users', () => {
   it('returns user list with viewer auth', async () => {
     const res = await request(app).get('/api/users')

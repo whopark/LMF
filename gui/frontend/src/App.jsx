@@ -27,6 +27,8 @@ function AppContent() {
     classification,
     revisedOnly,
     searchField,
+    scoreFilter,
+    modifiedAfter, modifiedBefore,
     historyArea,
     setItemNumbers,
     selectedHistoryNumber,
@@ -40,6 +42,7 @@ function AppContent() {
     setHistoryArea,
     setSelectedHistoryNumber,
   } = useFilterContext();
+  const { authHeader } = useAuth();
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -78,10 +81,19 @@ function AppContent() {
         year: selectedYear || undefined,
         area: selectedArea || undefined,
         sub_category: selectedSubCat || undefined,
-        search: searchTerm || undefined,
+        // Don't pass text search when using date range mode
+        search: (searchField !== 'modified_date' && searchTerm) ? searchTerm : undefined,
         classification: classification || undefined,
         revised_only: revisedOnly ? 'true' : undefined,
-        search_field: searchField || undefined,
+        search_field: (searchField && searchField !== 'modified_date') ? searchField : undefined,
+        // G5: score filter — 'null' maps to score_null=true (핵심/필수), numeric maps to exact score
+        ...(scoreFilter === 'null'
+          ? { score_null: 'true' }
+          : scoreFilter
+            ? { score_min: scoreFilter, score_max: scoreFilter }
+            : {}),
+        modified_after: modifiedAfter || undefined,
+        modified_before: modifiedBefore || undefined,
       };
       const res = await axios.get(`${API_BASE}/items`, { params });
       setItems(res.data.items);
@@ -92,7 +104,7 @@ function AppContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, searchField, classification, revisedOnly, viewMode, setTotalCount, setTotalPages]);
+  }, [page, selectedYear, selectedArea, selectedSubCat, searchTerm, searchField, classification, revisedOnly, scoreFilter, modifiedAfter, modifiedBefore, viewMode, setTotalCount, setTotalPages]);
 
   useEffect(() => {
     fetchItems();
@@ -143,7 +155,10 @@ function AppContent() {
         setLoading(true);
         try {
           const params = compareArea ? { area: compareArea } : {};
-          const res = await axios.get(`${API_BASE}/changes/${compareYear}`, { params });
+          // G-Y3: changes.js는 requireAuth('viewer') 적용됨 → authHeader 필수
+          const res = await axios.get(`${API_BASE}/changes/${compareYear}`, {
+            params, headers: authHeader(),
+          });
           setChangesData(res.data);
         } catch (err) {
           console.error('Failed to fetch changes:', err);
@@ -154,6 +169,7 @@ function AppContent() {
       };
       fetchChanges();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [compareYear, compareArea, viewMode, historySubMode, setChangesData]);
 
   return (

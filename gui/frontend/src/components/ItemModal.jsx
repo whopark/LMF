@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { getDisplayData, formatDescription, formatScore, API_BASE } from '../utils/helpers.jsx';
+import { getDisplayData, formatBlocks, formatDescription, formatScore, API_BASE } from '../utils/helpers.jsx';
 
 function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -15,7 +15,8 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
       question: display.question,
       description: display.description,
       score: selectedItem.about_item.score,
-      item_type: selectedItem.about_item.item_type
+      item_type: selectedItem.about_item.item_type || '',
+      field_specific_description: selectedItem.about_item.field_specific_description || '',
     });
     setIsEditing(true);
   };
@@ -32,8 +33,9 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
       const res = await axios.patch(`${API_BASE}/items/${selectedItem._id}`, {
         'about_item.question': editData.question,
         'about_item.description': editData.description,
+        'about_item.field_specific_description': editData.field_specific_description,
         'about_item.score': editData.score,
-        'about_item.item_type': editData.item_type
+        'about_item.item_type': editData.item_type,
       }, { headers });
       setSelectedItem(res.data);
       setItems(prev => prev.map(item => item._id === res.data._id ? res.data : item));
@@ -117,6 +119,17 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
 
 function ModalContent({ selectedItem, isEditing, editData, setEditData }) {
   const display = getDisplayData(selectedItem);
+  const classification = selectedItem.about_item?.item_type;
+  const isCore = classification === '핵심C' || classification === 'C';
+  const naAvailable = selectedItem.na_available === true;
+  const score = selectedItem.about_item?.score;
+  const yesLabel = isCore
+    ? <>(필수)</>
+    : score != null
+      ? <>({score}점)</>
+      : null;
+  // colSpan for 설명 row: label(1) + question(1) + 예(1) + 아니오(1) [+ 해당없음(1)]
+  const optionColCount = naAvailable ? 3 : 2;
 
   return (
     <div className="review-table-container">
@@ -127,12 +140,17 @@ function ModalContent({ selectedItem, isEditing, editData, setEditData }) {
             <td className="item-content-cell">
               {isEditing ? (
                 <div className="item-main-header">
-                  <input
+                  <select
                     className="edit-input"
                     style={{ width: 80 }}
                     value={editData.item_type}
                     onChange={e => setEditData({ ...editData, item_type: e.target.value })}
-                  />
+                  >
+                    <option value="C">핵심C</option>
+                    <option value="R">필요R</option>
+                    <option value="B">기본B</option>
+                    <option value="">-</option>
+                  </select>
                   <span style={{ fontWeight: 600 }}>{selectedItem.about_item.item_number}</span>
                   <input
                     className="edit-input"
@@ -149,12 +167,13 @@ function ModalContent({ selectedItem, isEditing, editData, setEditData }) {
                 </div>
               )}
             </td>
-            <td className="option-cell">예<br />(필수)</td>
-            <td className="option-cell" style={{ borderRight: 'none' }}>아니오</td>
+            <td className="option-cell">예{yesLabel && <><br />{yesLabel}</>}</td>
+            <td className="option-cell" style={naAvailable ? {} : { borderRight: 'none' }}>아니오</td>
+            {naAvailable && <td className="option-cell" style={{ borderRight: 'none' }}>해당없음</td>}
           </tr>
           <tr>
             <td className="label-cell">설명</td>
-            <td className="item-content-cell" colSpan={3} style={{ borderRight: 'none' }}>
+            <td className="item-content-cell" colSpan={1 + optionColCount} style={{ borderRight: 'none' }}>
               <div className="description-text">
                 {isEditing ? (
                   <textarea
@@ -163,7 +182,9 @@ function ModalContent({ selectedItem, isEditing, editData, setEditData }) {
                     onChange={e => setEditData({ ...editData, description: e.target.value })}
                   />
                 ) : (
-                  <div className="description-content">{formatDescription(display.description)}</div>
+                  <div className="description-content">
+                    {formatBlocks(selectedItem.about_item?.blocks, display.description)}
+                  </div>
                 )}
               </div>
             </td>
@@ -199,6 +220,24 @@ function ModalMetadata({ selectedItem, isEditing, editData, setEditData }) {
       </div>
       {'na_available' in selectedItem && (
         <div><strong>해당없음:</strong> {selectedItem.na_available ? '적용 가능' : '해당없음 없음'}</div>
+      )}
+      {(selectedItem.about_item?.field_specific_description || isEditing) && (
+        <div>
+          <strong>분야특이 설명:</strong>
+          {isEditing ? (
+            <textarea
+              className="edit-textarea"
+              style={{ marginTop: '0.25rem', width: '100%', minHeight: '4rem', fontSize: '0.875rem' }}
+              value={editData?.field_specific_description || ''}
+              onChange={e => setEditData({ ...editData, field_specific_description: e.target.value })}
+              placeholder="이 분야에만 적용되는 추가 설명..."
+            />
+          ) : (
+            <div style={{ marginTop: '0.25rem', whiteSpace: 'pre-wrap', fontSize: '0.875rem' }}>
+              {selectedItem.about_item.field_specific_description}
+            </div>
+          )}
+        </div>
       )}
       <div><strong>출처:</strong> {selectedItem.metadata.source} ({selectedItem.metadata.year}년)</div>
     </div>
