@@ -4,6 +4,7 @@
 |---------|-------|:----------:|----------|------|
 | revision-workflow (문항 수정·개정) | completed | 96% | 2026-06-14 | `revision-workflow/` |
 | yearly-tracking (문항 연도별 추적) | completed | 99% | 2026-06-14 | `yearly-tracking/` |
+| data-integrity (§5 데이터 오염 정제) | completed | ~97% | 2026-06-14 | `data-integrity/` |
 
 ---
 
@@ -29,3 +30,16 @@
   - G-Y1 changes.js 인증 · G-Y6 한글 비교전용 정규화(normalizeKo) · G-Y5 6필드 diff · G-Y4 verbatim reason batch + ComparisonTable 6필드 · G-Y2 화면B verbatim 표시(LLM 초안 격하) · G-Y3 화면A→B 자동필터 · G-Y7 empty-state · G-A1(Check) 분야특이/해당없음 행 추가
 - **핵심 가치**: "화면 = Export 동일 소스"(verbatim Revision.reason 통일)
 - **잔여(v.next)**: 5년 이력 타임라인·DELETED 부활(과거 5년 데이터 마이그레이션 후) / 분야별 ZIP Export(R-25) / 1:1 PDF 좌우(R-12) / 프론트 E2E(Playwright)
+
+---
+
+## data-integrity — §5 데이터 오염 정제 (2020 병합·2021 미분류·blocks)
+
+- **기간**: 2026-06-14 (yearly-tracking 후속)
+- **레벨**: Dynamic · **아키텍처**: Option B (클린 — 변환별 모듈 분리)
+- **결과**: Match Rate **~97%** · SC **6/6 Met** · 백엔드 테스트 **182/182**(spec5 21 신규) · 멱등 실증(재실행 `changed=0`)
+- **문서**: plan · design · analysis · report (4종 · PRD 생략 — 버그/데이터 정합 성격)
+- **적용(로컬 DB)**: **9,573 변경** — 2020 병합분리(→0) · 2021 미분류(1,601→17 단종) · blocks(9,532) · 백업 `checklist_items_backup_20260614-2`
+- **요약**: 과거연도 구조 오염 정제 — ∙기준 질문/설명 분리, 2026 우선 common_key 분류 백필, description→blocks 적재. 순수변환(`lib/spec5/*`) + 오케스트레이터(dry-run 기본·백업·bulkWrite·사후검증). 안전: 백업·dry-run·멱등·롤백.
+- **검증**: gap-detector 86% → 런타임 보정(멱등 실증·브라우저 SC-6) + iterate(설계 동기화·SC-2 리포트) → ~97%
+- **잔여(차기)**: 답안마커 bleed 12건(2025 `예 (필수)`) · 탭/공백 표 blocks · 프론트 `getDisplayData` band-aid 제거 · 선택적 하드닝(blocksEqual deep-equal·dry-run 사후검증)
