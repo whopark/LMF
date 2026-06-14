@@ -75,3 +75,19 @@ autopus-adk/
 # Note: .autopus/specs/, .autopus/brainstorms/, .autopus/project/ are user-authored
 # documents (per .claude/rules/autopus/doc-storage.md) and SHOULD be tracked.
 .mcp.json
+
+# Test coverage output (generated)
+gui/backend/coverage/
+gui/frontend/coverage/
+
+# Generated data reports (import/diff artifacts)
+gui/backend/reports/
+
+# bkit PDCA framework runtime state (auto-managed, machine-local)
+.bkit/
+
+# Agent memory (local learning state, not shared across machines)
+.claude/agent-memory/
+
+# Parsed checklist data — copyright (한국 임상병리학회 점검표 본문). Held local.
+pdf/checklist_items_*.json
