@@ -233,3 +233,61 @@ describe('GET /api/revisions/edit-type-codes', () => {
     expect(res.body[0]).toHaveProperty('label');
   });
 });
+
+// ─── G4: edit_types filter ────────────────────────────────────────────────
+describe('GET /api/revisions?edit_types= (G4)', () => {
+  beforeEach(async () => {
+    await Revision.create([
+      {
+        item_number: '01.010.001', area_code: '01', year: 2026,
+        user: '테스터', edit_types: ['MODIFY_ITEM', 'MODIFY_DESC'],
+        reason: '내용 수정', before: {}, after: {}, score_changed: false,
+      },
+      {
+        item_number: '01.010.002', area_code: '01', year: 2026,
+        user: '테스터', edit_types: ['ADD_AREA'],
+        reason: '분야 추가', before: {}, after: {}, score_changed: false,
+      },
+      {
+        item_number: '01.010.003', area_code: '01', year: 2026,
+        user: '테스터', edit_types: ['SCORE_CHANGE'],
+        reason: '배점 변경', before: {}, after: {}, score_changed: true,
+      },
+    ]);
+  });
+
+  it('filters revisions by single edit_type (comma-separated)', async () => {
+    const res = await request(app)
+      .get('/api/revisions')
+      .query({ edit_types: 'ADD_AREA' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.revisions.length).toBe(1);
+    expect(res.body.revisions[0].item_number).toBe('01.010.002');
+  });
+
+  it('filters by multiple edit_types using $in logic', async () => {
+    const res = await request(app)
+      .get('/api/revisions')
+      .query({ edit_types: 'MODIFY_ITEM,SCORE_CHANGE' });
+
+    expect(res.status).toBe(200);
+    // MODIFY_ITEM matches 01.010.001, SCORE_CHANGE matches 01.010.003
+    expect(res.body.revisions.length).toBe(2);
+  });
+
+  it('returns all revisions when edit_types not specified', async () => {
+    const res = await request(app).get('/api/revisions');
+    expect(res.status).toBe(200);
+    expect(res.body.revisions.length).toBe(3);
+  });
+
+  it('returns empty when edit_type does not exist', async () => {
+    const res = await request(app)
+      .get('/api/revisions')
+      .query({ edit_types: 'NONEXISTENT_TYPE' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.revisions.length).toBe(0);
+  });
+});
