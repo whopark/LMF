@@ -3,7 +3,7 @@ import { HelpCircle, LayoutTemplate, History, Calendar, Map, Tag, ChevronRight, 
 import axios from 'axios';
 import { useFilterContext } from '../contexts/FilterContext';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import { API_BASE } from '../utils/helpers.jsx';
+import { API_BASE, areaLabel } from '../utils/helpers.jsx';
 
 function Sidebar() {
   const { viewMode, setViewMode, totalCount, resetFilters, selectedItemObjects } = useFilterContext();
@@ -118,7 +118,7 @@ function DashboardFilters() {
         <select className="select-input" value={selectedArea}
           onChange={e => { setSelectedArea(e.target.value); setPage(1); }}>
           <option value="">전체 대분류</option>
-          {filters.areas.map(a => <option key={a.code} value={a.code}>{a.name}</option>)}
+          {filters.areas.map(a => <option key={a.code} value={a.code}>{areaLabel(a)}</option>)}
         </select>
       </div>
 
@@ -226,7 +226,7 @@ function CompareFilters() {
         <label className="filter-label"><Map size={14} style={{ marginRight: 6 }} /> 대분류 필터 (선택)</label>
         <select className="select-input" value={compareArea} onChange={e => setCompareArea(e.target.value)}>
           <option value="">전체 분야</option>
-          {filters.areas.map(a => <option key={a.code} value={a.code}>{a.name}</option>)}
+          {filters.areas.map(a => <option key={a.code} value={a.code}>{areaLabel(a)}</option>)}
         </select>
       </div>
       {changesData && (
@@ -253,7 +253,7 @@ function TrackFilters() {
         <label className="filter-label"><Map size={14} style={{ marginRight: 6 }} /> 대분류 선택</label>
         <select className="select-input" value={historyArea} onChange={e => setHistoryArea(e.target.value)}>
           <option value="">분야 선택...</option>
-          {filters.areas.map(a => <option key={a.code} value={a.code}>{a.name}</option>)}
+          {filters.areas.map(a => <option key={a.code} value={a.code}>{areaLabel(a)}</option>)}
         </select>
       </div>
       <div className="filter-group">

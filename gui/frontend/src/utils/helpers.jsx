@@ -117,6 +117,14 @@ export function getDisplayData(item) {
   return { question: q, description: d };
 }
 
+// 대분류 옵션 라벨: "코드 이름" (예: "01 검사실운영"). area.code가 그룹("30,31,…")이면
+// 첫(대표) 코드만 표시 → "30 임상미생물".
+export function areaLabel(area) {
+  if (!area) return '';
+  const code = String(area.code || '').split(',')[0];
+  return code ? `${code} ${area.name}` : area.name;
+}
+
 // API Base URL: uses VITE_API_URL in production, falls back to /api for dev proxy
 export const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`

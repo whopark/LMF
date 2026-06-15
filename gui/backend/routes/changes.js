@@ -4,6 +4,7 @@ const Item = require('../models/Item');
 const Revision = require('../models/Revision');
 const { requireAuth } = require('../middleware/roles');
 const { normalizeKo } = require('../utils/normalizeKo');
+const { areaCodeClause } = require('../utils/areaFilter');
 
 const router = express.Router();
 
@@ -14,7 +15,8 @@ router.get('/:year', requireAuth('viewer'), async (req, res) => {
     const { area } = req.query;
     const prevYear = targetYear - 1;
 
-    const baseQuery = area ? { area_code: area } : {};
+    const clause = areaCodeClause(area);
+    const baseQuery = clause !== undefined ? { area_code: clause } : {};
 
     const [targetItems, prevItems] = await Promise.all([
       Item.find({ year: targetYear, ...baseQuery }).lean(),
