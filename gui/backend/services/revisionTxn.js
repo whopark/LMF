@@ -65,7 +65,7 @@ async function applyItemEdit({ id, updates, editTypes = [], rawReason, user, rol
 }
 
 // G1 + G7: bulk propagation across a common_key — every item update + revision commits atomically.
-async function applyCommonEdit({ key, areaCodes, updates, editTypes = [], rawReason, user, role }) {
+async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], rawReason, user, role }) {
   assertEditTypesAllowed(editTypes, role); // G6: sensitive types require approver+
   const safeUpdates = {};
   for (const f of COMMON_SHARED_FIELDS) {
@@ -78,6 +78,8 @@ async function applyCommonEdit({ key, areaCodes, updates, editTypes = [], rawRea
   return withTransaction(async (session) => {
     const query = { common_key: key };
     if (Array.isArray(areaCodes) && areaCodes.length > 0) query.area_code = { $in: areaCodes };
+    // G-1: scope propagation to the edited year so past years are never overwritten.
+    if (year !== undefined && year !== null) query.year = Number(year);
 
     const targets = await Item.find(query).session(session).lean();
     if (targets.length === 0) throw httpError('No items found for this common_key', 404);
