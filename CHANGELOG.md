@@ -13,8 +13,14 @@ All notable changes to this project will be documented in this file.
   - Express JSON body parser 32KB 제한 (REQ-6)
   - import-data.js 스키마 재사용 리팩토링 (REQ-7)
   - SPEC 문서화 4개 파일 구성 (REQ-9)
+- **SPEC-DEPS-001**: Vite 6→8 업그레이드 + esbuild 취약점 해소 완료
+  - vite 6.4.3 → 8.0.16, @vitejs/plugin-react 4.3.4 → 6.0.2 (REQ-1)
+  - esbuild ≤0.28.0 (GHSA-gv7w-rqvm-qjhr) 해소, npm audit high 0 (REQ-2)
+  - vitest 4.1.5 유지(이미 vite 8 호환), engines.node 명시 + CI node 20→22 (REQ-9/10)
+  - 검증: build·build:gh(/LMF/)·test:run(55/55)·audit(0) 전 AC PASS — 멀티 프로바이더 리뷰(claude+gemini) PASS
 
 ### Security
+- **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)
 - **SEC-001**: CORS wildcard를 whitelist 방식으로 변경 (`CORS_ORIGINS` 환경변수)
 - **SEC-002**: API key 비교를 timing-safe 방식으로 변경 (`crypto.timingSafeEqual`)
 - **SEC-003**: 보안 이벤트 로깅 추가 (AUTH_FAILURE, AUTHZ_DENIED, RATE_LIMIT_EXCEEDED)

@@ -1,6 +1,6 @@
 # SPEC-DEPS-001 · Vite 6→8 업그레이드 및 esbuild 취약점 해소
 
-- Status: approved
+- Status: completed
 - Priority: Must
 - Owner: 메인 세션
 - Created: 2026-06-16
