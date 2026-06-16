@@ -3,10 +3,28 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { getDisplayData, formatBlocks, formatDescription, formatScore, API_BASE } from '../utils/helpers.jsx';
+import CommonItemPanel from './CommonItemPanel.jsx';
 
 function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(null);
+  const [showCommon, setShowCommon] = useState(false); // 공통문항 일괄 패널 토글
+
+  // Design Ref: §3 — 공통문항 일괄 저장 후 열린 문항이 적용 분야면 변경분만 머지(불변)
+  const handleCommonSaved = ({ updates, areaCodes }) => {
+    const areaCode = selectedItem?.about_item?.item_number?.slice(0, 2);
+    if (areaCode && areaCodes.includes(areaCode)) {
+      const ai = { ...selectedItem.about_item };
+      if ('question' in updates) ai.question = updates.question;
+      if ('description' in updates) ai.description = updates.description;
+      if ('score' in updates) ai.score = updates.score;
+      const merged = { ...selectedItem, about_item: ai };
+      setSelectedItem(merged);
+      setItems(prev => prev.map(i => i._id === merged._id ? merged : i));
+      setHistoryItems(prev => prev.map(i => i._id === merged._id ? merged : i));
+    }
+    setShowCommon(false);
+  };
 
   const handleEdit = () => {
     // Use getDisplayData to properly split merged question/description (2020 data)
@@ -57,6 +75,7 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
       setSelectedItem(null);
     }
     setIsEditing(false);
+    setShowCommon(false);
   };
 
   return (
@@ -79,13 +98,25 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
             <div className="modal-actions-header">
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 {!isEditing ? (
-                  <button
-                    onClick={handleEdit}
-                    className="select-input"
-                    style={{ width: 'auto', padding: '0.4rem 1.2rem', color: '#38bdf8', borderColor: '#38bdf8' }}
-                  >
-                    수정
-                  </button>
+                  <>
+                    <button
+                      onClick={handleEdit}
+                      className="select-input"
+                      style={{ width: 'auto', padding: '0.4rem 1.2rem', color: '#38bdf8', borderColor: '#38bdf8' }}
+                    >
+                      수정
+                    </button>
+                    {/* SC-1: common_key 있을 때만 공통문항 일괄 진입점 노출 */}
+                    {selectedItem.common_key && !showCommon && (
+                      <button
+                        onClick={() => setShowCommon(true)}
+                        className="select-input"
+                        style={{ width: 'auto', padding: '0.4rem 1.2rem', color: '#a78bfa', borderColor: '#a78bfa' }}
+                      >
+                        공통문항 일괄
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <>
                     <button onClick={handleSave} className="btn-save">저장</button>
@@ -97,18 +128,28 @@ function ItemModal({ selectedItem, setSelectedItem, setItems, setHistoryItems })
             </div>
 
             <div className="modal-body-content">
-              <ModalContent
-                selectedItem={selectedItem}
-                isEditing={isEditing}
-                editData={editData}
-                setEditData={setEditData}
-              />
-              <ModalMetadata
-                selectedItem={selectedItem}
-                isEditing={isEditing}
-                editData={editData}
-                setEditData={setEditData}
-              />
+              {showCommon ? (
+                <CommonItemPanel
+                  commonKey={selectedItem.common_key}
+                  onClose={() => setShowCommon(false)}
+                  onSaved={handleCommonSaved}
+                />
+              ) : (
+                <>
+                  <ModalContent
+                    selectedItem={selectedItem}
+                    isEditing={isEditing}
+                    editData={editData}
+                    setEditData={setEditData}
+                  />
+                  <ModalMetadata
+                    selectedItem={selectedItem}
+                    isEditing={isEditing}
+                    editData={editData}
+                    setEditData={setEditData}
+                  />
+                </>
+              )}
             </div>
           </motion.div>
         </motion.div>

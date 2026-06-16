@@ -22,12 +22,6 @@ jobs:
       run:
         working-directory: gui/backend
 
-    services:
-      mongodb:
-        image: mongo:7.0
-        ports:
-          - 27017:27017
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,7 +29,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+
+      # Transactions (revision/common-item bulk edits, TOCTOU lock) require a
+      # replica set. A standalone mongod fails with "Transaction numbers are only
+      # allowed on a replica set member or mongos". Single-node rs0 mirrors local.
+      - name: Start MongoDB (single-node replica set)
+        uses: supercharge/mongodb-github-action@1.11.0
+        with:
+          mongodb-version: '7.0'
+          mongodb-replica-set: rs0
 
       - name: Install dependencies
         run: npm install
@@ -43,7 +46,7 @@ jobs:
       - name: Run tests
         run: npm run test:run
         env:
-          MONGO_URI: mongodb://localhost:27017/test
+          MONGO_URI: mongodb://localhost:27017/test?replicaSet=rs0
 
   # ─────────────────────────────────────────────────────────────
   # Frontend Job: Install, Build, Test
@@ -62,7 +65,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install

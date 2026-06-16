@@ -47,6 +47,55 @@ describe('GET /api/common/:key', () => {
   });
 });
 
+// G-1/G-2: year scoping + field_specific_description in GET response
+describe('GET /api/common/:key — year scoping + field_specific', () => {
+  const a01_2026 = { ...area01, description: '2026 설명', field_specific_description: '01 분야특이' };
+  const a01_2025 = { ...area01, year: 2025, description: '2025 설명' };
+  const a90_2026 = { ...area90, description: '2026 설명' };
+
+  beforeEach(async () => { await Item.create([a01_2026, a01_2025, a90_2026]); });
+
+  it('defaults to the latest year only (no per-year duplicates)', async () => {
+    const res = await request(app).get('/api/common/010.001');
+    expect(res.status).toBe(200);
+    expect(res.body.year).toBe(2026);
+    expect(res.body.items.length).toBe(2); // 01,90 @2026 — not 2025
+    expect(res.body.items.every(i => i.year === 2026)).toBe(true);
+  });
+
+  it('honors ?year= filter', async () => {
+    const res = await request(app).get('/api/common/010.001?year=2025');
+    expect(res.body.items.length).toBe(1);
+    expect(res.body.items[0].year).toBe(2025);
+  });
+
+  it('includes field_specific_description (read-only display)', async () => {
+    const res = await request(app).get('/api/common/010.001');
+    const a01 = res.body.items.find(i => i.area_code === '01');
+    expect(a01).toHaveProperty('field_specific_description', '01 분야특이');
+  });
+});
+
+describe('PATCH /api/common/:key — year isolation (G-1)', () => {
+  const a01_2026 = { ...area01, description: '2026 설명' };
+  const a01_2025 = { ...area01, year: 2025, description: '2025 설명' };
+  beforeEach(async () => { await Item.create([a01_2026, a01_2025]); });
+
+  it('scopes the update to the given year only', async () => {
+    const res = await request(app)
+      .patch('/api/common/010.001')
+      .set('X-API-Key', API_KEY)
+      .send({ description: '신규 2026', area_codes: ['01'], year: 2026 });
+    expect(res.status).toBe(200);
+    expect(res.body.updated.length).toBe(1);
+
+    const y2026 = await Item.findOne({ area_code: '01', year: 2026 }).lean();
+    const y2025 = await Item.findOne({ area_code: '01', year: 2025 }).lean();
+    expect(y2026.description).toBe('신규 2026');
+    expect(y2025.description).toBe('2025 설명'); // past year untouched
+  });
+});
+
 describe('PATCH /api/common/:key — bulk update', () => {
   beforeEach(async () => {
     await Item.create([area01, area90]);

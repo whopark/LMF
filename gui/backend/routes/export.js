@@ -6,6 +6,7 @@ const { serverError } = require('../utils/httpError');
 const { buildItemsWorkbook, buildRevisionsWorkbook } = require('../utils/exportExcel');
 const { buildRevisionsDocx } = require('../utils/exportDocx');
 const { buildItemsPdf, buildRevisionsPdf } = require('../utils/exportPdf');
+const { areaCodeClause } = require('../utils/areaFilter');
 
 const router = express.Router();
 
@@ -14,7 +15,8 @@ router.use(requireAuth('editor'));
 
 function buildItemQuery(query) {
   const q = {};
-  if (query.area) q.area_code = String(query.area);
+  const areaClause = areaCodeClause(query.area);
+  if (areaClause !== undefined) q.area_code = areaClause;
   if (query.year) q.year = parseInt(query.year);
   if (query.sub_category) q.sub_category = String(query.sub_category);
   if (query.classification) q.classification = String(query.classification);
@@ -24,7 +26,8 @@ function buildItemQuery(query) {
 
 function buildRevisionQuery(query) {
   const q = {};
-  if (query.area) q.area_code = String(query.area);
+  const areaClause = areaCodeClause(query.area);
+  if (areaClause !== undefined) q.area_code = areaClause;
   if (query.year) q.year = parseInt(query.year);
   if (query.score_changed === 'true') q.score_changed = true;
   return q;

@@ -19,22 +19,31 @@ function toCommonResponse(item) {
     score: item.score,
     classification: item.classification,
     na_available: item.na_available,
+    field_specific_description: item.field_specific_description, // G-2: read-only 분야특이 표시
     revision: item.revision,
     common_key: item.common_key,
   };
 }
 
-// GET /api/common/:key — all items sharing this common_key
+// GET /api/common/:key — items sharing this common_key, scoped to ONE year (G-1).
+// ?year=<n> selects a specific year; default = latest year present (one row per area).
 router.get('/:key', async (req, res) => {
   try {
-    const items = await Item.find({ common_key: req.params.key })
-      .sort({ area_code: 1, year: -1 })
-      .lean();
+    const { key } = req.params;
+    const query = { common_key: key };
+    if (req.query.year) {
+      query.year = parseInt(req.query.year, 10);
+    } else {
+      const latest = await Item.findOne({ common_key: key }).sort({ year: -1 }).select('year').lean();
+      if (!latest) return res.status(404).json({ message: 'No items found for this common_key' });
+      query.year = latest.year;
+    }
 
+    const items = await Item.find(query).sort({ area_code: 1 }).lean();
     if (items.length === 0) {
       return res.status(404).json({ message: 'No items found for this common_key' });
     }
-    res.json({ common_key: req.params.key, items: items.map(toCommonResponse) });
+    res.json({ common_key: key, year: query.year, items: items.map(toCommonResponse) });
   } catch (err) {
     serverError(res, err, 'common.js');
   }
@@ -46,11 +55,12 @@ router.get('/:key', async (req, res) => {
 router.patch('/:key', requireAuth('editor'), async (req, res) => {
   try {
     const { key } = req.params;
-    const { area_codes, edit_types = [], reason = '', ...rest } = req.body;
+    const { area_codes, edit_types = [], reason = '', year, ...rest } = req.body;
 
     const result = await applyCommonEdit({
       key,
       areaCodes: area_codes,
+      year, // G-1: scope propagation to a single year
       updates: rest,
       editTypes: edit_types,
       rawReason: reason,

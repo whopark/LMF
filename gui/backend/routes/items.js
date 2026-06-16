@@ -6,6 +6,7 @@ const { requireApiKey } = require('../middleware/auth');
 const { requireAuth } = require('../middleware/roles');
 const { serverError } = require('../utils/httpError');
 const { applyItemEdit } = require('../services/revisionTxn');
+const { areaCodeClause } = require('../utils/areaFilter');
 
 const router = express.Router();
 
@@ -65,7 +66,8 @@ router.get('/', async (req, res) => {
     const safePage = Math.max(parseInt(page) || 1, 1);
 
     const query = {};
-    if (area) query.area_code = String(area);
+    const areaClause = areaCodeClause(area);
+    if (areaClause !== undefined) query.area_code = areaClause;
     const parsedYear = safeYear(year);
     if (parsedYear !== undefined) query.year = parsedYear;
     if (sub_category) query.sub_category = sub_category;
