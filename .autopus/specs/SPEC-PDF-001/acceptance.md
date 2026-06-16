@@ -116,3 +116,21 @@ Given pdf/<연도> 심사점검표/*.pdf 변경
 When  parse_pdf_2026.py 재실행 → flat_v2 갱신 → import_to_pg.py
 Then  갱신분이 PG에 멱등 반영(AC-6)
 ```
+
+## 적재 검증 결과 (2026, sync 2026-06-17 · commit 6da48bb)
+
+`verify_2026.sql`(V1~V11) + 로더 멱등 재실행 실측:
+
+| AC | 기준 | 2026 실측 | 판정 |
+|----|------|-----------|------|
+| AC-1 | 행 수 | item_content 1026 / checklist_item 1635 (dedup 609) | △ 2026 한정 (전체 9984/6566 미적재) |
+| AC-3 | C+score=0 | 0 위반 | ✅ |
+| AC-4 | 010.090 dedup | 14분야 → content 1행, question 1종 | ✅ |
+| AC-5 | 위반 격리 dropped=0 | 이상치 5건 etl_report 격리, 누락 0 | ✅ |
+| AC-6 | 멱등 | 재실행 1635/1026 불변 | ✅ |
+| AC-8 | 시드 | area 22 · class 3 · sub_category 93 | ✅ |
+| AC-9 | 연도분포 2026 | 1635 | ✅ |
+| AC-13 | item_number parity | mismatch 0 | ✅ |
+| FK | orphan 0 | 0 | ✅ |
+
+**AC-1 전체(9984/6566) 미충족**: 2020~2025 분할분야 PK 충돌 → SPEC-DB-001 스키마 개정 후 적재.

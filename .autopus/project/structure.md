@@ -58,7 +58,10 @@ d:/LMF_all/
 │   │   └── 2020.pdf ~ 2024.pdf       # 연도별 원본 PDF
 │   ├── checklist_items_final.json    # ⭐ MongoDB import 소스 (단일 진실)
 │   ├── classification_map.json
-│   ├── import_to_mongodb.py          # ⭐ 메인 import 스크립트
+│   ├── import_to_mongodb.py          # ⭐ 메인 import 스크립트 (Mongo)
+│   ├── import_to_pg.py               # ⭐ PG 적재 (SPEC-PDF-001, psycopg)
+│   ├── pg_load.py                    # PG 적재 순수 변환 로직 (dedup/이상치/parity)
+│   ├── verify_2026.sql               # PG 적재 AC 오라클 검증 스위트
 │   ├── import_verification_reports_v4.py  # ⭐ 현재 ETL (v4)
 │   ├── verification_reports_v4.json  # v4 중간 산출물
 │   ├── dashboard.py                  # Streamlit 대시보드

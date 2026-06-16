@@ -1,6 +1,6 @@
 # SPEC-PDF-001 · 기존 PDF 파서 재사용 → PG 적재 (PDF 구조 데이터 PG 로드)
 
-- Status: approved
+- Status: implemented (2026 적재·검증 완료 · 2020~2025 SPEC-DB-001 스키마 개정 대기)
 - Priority: Must
 - Owner: 메인 세션
 - Created: 2026-06-17
@@ -58,3 +58,22 @@ sibling SPEC. PG 스키마/제약은 SPEC-DB-001 소유(본 SPEC은 데이터만
 ## 5. Open Issues
 - score 비수치값의 분류-미설명 이상치(드문 케이스) 처리 — research D2(리포트 후 수동 판정).
 - 비표준 `item_number` 포맷의 common_key 파생 불일치 시 생성 item_number ≠ 소스 → REQ-6 검증에서 격리(D7).
+
+## 6. 적재 결과 (sync 2026-06-17 · commit 6da48bb)
+
+`pdf/import_to_pg.py` + `pg_load.py` 구현 완료. PG(lmf-pg:5435)에 **2026 적재·검증 통과**:
+
+| 항목 | 결과 |
+|------|------|
+| checklist_item / item_content (2026) | 1635 / 1026 (dedup 609 제거) |
+| 무손실 (= source 1635) | 1635 ✓ |
+| AC-3 C+score 위반 | 0 ✓ |
+| AC-4 dedup(010.090/2026) | 14분야 → content 1행, question 1종 ✓ |
+| AC-5 분야·연도 중복 | 0 ✓ (이상치 5건 etl_report 격리) |
+| AC-9 연도분포 2026 | 1635 ✓ |
+| AC-13 item_number parity | mismatch 0 ✓ |
+| 시드 | area 22 · class 3 · sub_category 93 ✓ |
+
+**AC-1 전체(9984/6566) 미충족** — 2020~2025는 분할분야(임상미생물 30→31~36, 수혈 40→41~46)
+논리 item_number ↔ 물리 area_code PK 충돌(169건)로 적재 차단. SPEC-DB-001 스키마 개정
+(item_number STORED, PK 재설계) 후 적재 예정.

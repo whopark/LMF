@@ -18,6 +18,11 @@ All notable changes to this project will be documented in this file.
   - esbuild ≤0.28.0 (GHSA-gv7w-rqvm-qjhr) 해소, npm audit high 0 (REQ-2)
   - vitest 4.1.5 유지(이미 vite 8 호환), engines.node 명시 + CI node 20→22 (REQ-9/10)
   - 검증: build·build:gh(/LMF/)·test:run(55/55)·audit(0) 전 AC PASS — 멀티 프로바이더 리뷰(claude+gemini) PASS
+- **SPEC-PDF-001**: PDF→PG 적재 로더 구현 + 2026 적재·검증 완료 (부분)
+  - `pdf/import_to_pg.py` + `pg_load.py`: flat_v2.json → PG 정규화 스키마 적재 (멱등 ON CONFLICT, dry-run 기본, 배치 트랜잭션 경계, 위반 리포트, 참조 시드) (REQ-1~8)
+  - 2026 적재: checklist_item 1635 / item_content 1026 (dedup 609 제거), 무손실, AC-3/4/5/13 위반 0, FK orphan 0
+  - `verify_2026.sql` AC 오라클 V1~V11 PASS · 멀티 프로바이더 리뷰(claude+gemini) PASS
+  - 2020~2025는 분할분야 PK 충돌로 SPEC-DB-001 스키마 개정 후 적재 예정 (AC-1 전체 9984/6566 미충족)
 
 ### Security
 - **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)
