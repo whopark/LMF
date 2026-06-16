@@ -7,7 +7,7 @@
 | 레이어 | 기술 | 버전 |
 |---|---|---|
 | Frontend Runtime | React | 19.x |
-| Frontend Build | Vite | 6.x |
+| Frontend Build | Vite | 8.x |
 | Frontend HTTP Client | axios | 1.8.x |
 | Frontend Animation | framer-motion | 12.4.x |
 | Frontend Icons | lucide-react | 0.479.x |
