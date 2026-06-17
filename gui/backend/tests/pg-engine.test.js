@@ -184,6 +184,25 @@ describe('SPEC-DB-001 Phase 8 · PG engine integration', () => {
     expect(miss.total).toBe(0)
   })
 
+  it('aux repos: editTypeRepo seed, worklistRepo set/get/clear, auditRepo list', async (ctx) => {
+    if (!pgUp) return ctx.skip()
+    const editTypeRepo = require('../repositories/editTypeRepo')
+    const worklistRepo = require('../repositories/worklistRepo')
+    const auditRepo = require('../repositories/auditRepo')
+
+    const codes = await editTypeRepo.listActive() // seeds DEFAULT_CODES on empty
+    expect(codes.length).toBe(13)
+    expect(codes[0].code).toBe('NEW_ITEM')
+
+    await worklistRepo.set('u', 2026, ['01.010.001', '01.010.020'])
+    expect((await worklistRepo.get('u', 2026)).item_numbers).toEqual(['01.010.001', '01.010.020'])
+    await worklistRepo.clear('u', 2026)
+    expect((await worklistRepo.get('u', 2026)).item_numbers).toEqual([])
+
+    const a = await auditRepo.list({}, { skip: 0, limit: 10 })
+    expect(a.total).toBe(0) // audit_log truncated in beforeEach
+  })
+
   it('transitionItem advances the workflow with an atomic guard', async (ctx) => {
     if (!pgUp) return ctx.skip()
     const r = await services.transitionItem({ id: '01.01.010.001.2026', to: 'draft', role: 'editor' })

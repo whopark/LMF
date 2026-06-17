@@ -1,21 +1,16 @@
 const { serverError } = require('../utils/httpError');
 const express = require('express');
-const { EditTypeCode, DEFAULT_CODES } = require('../models/EditTypeCode');
 const { requireAuth } = require('../middleware/roles');
 const { unlockItem, transitionItem } = require('../services/revisionTxn');
 const revisionRepo = require('../repositories/revisionRepo');
+const editTypeRepo = require('../repositories/editTypeRepo');
 
 const router = express.Router();
 
 // GET /api/revisions/edit-type-codes — must be BEFORE /:id routes
 router.get('/edit-type-codes', async (req, res) => {
   try {
-    let codes = await EditTypeCode.find({ active: true }).sort({ order: 1 }).lean();
-    if (codes.length === 0) {
-      await EditTypeCode.insertMany(DEFAULT_CODES, { ordered: false }).catch(() => {});
-      codes = DEFAULT_CODES.filter(c => c);
-    }
-    res.json(codes);
+    res.json(await editTypeRepo.listActive());
   } catch (err) {
     serverError(res, err, 'revisions.js');
   }
