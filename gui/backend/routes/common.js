@@ -50,7 +50,7 @@ router.get('/:key', async (req, res) => {
 router.patch('/:key', requireAuth('editor'), async (req, res) => {
   try {
     const { key } = req.params;
-    const { area_codes, edit_types = [], reason = '', year, ...rest } = req.body;
+    const { area_codes, edit_types = [], reason = '', year, admin_override, ...rest } = req.body;
 
     const result = await applyCommonEdit({
       key,
@@ -59,6 +59,7 @@ router.patch('/:key', requireAuth('editor'), async (req, res) => {
       updates: rest,
       editTypes: edit_types,
       rawReason: reason,
+      adminOverride: admin_override, // REQ-10: admin-only override of the all-or-nothing lock policy
       user: req.user?.name || 'unknown',
       role: req.user?.role || 'unknown',
     });
@@ -68,7 +69,11 @@ router.patch('/:key', requireAuth('editor'), async (req, res) => {
     if (err.status === 400) {
       return res.status(400).json({ message: err.message, allowed_fields: COMMON_SHARED_FIELDS });
     }
-    if (err.status) return res.status(err.status).json({ message: err.message });
+    if (err.status) {
+      const body = { message: err.message };
+      if (err.blocked_locked) body.blocked_locked = err.blocked_locked; // REQ-10 / AC-9: 409 lock block
+      return res.status(err.status).json(body);
+    }
     serverError(res, err, 'common.js');
   }
 });

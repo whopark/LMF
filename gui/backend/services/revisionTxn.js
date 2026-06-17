@@ -3,6 +3,7 @@
 // to the engine write repo (mongo|pg). This facade keeps the engine-agnostic guards: sensitive
 // edit-type gating (G6), shared-field filtering (G7), and the unlock reason requirement.
 const { assertEditTypesAllowed } = require('../constants/sensitiveEditTypes');
+const { hasRole } = require('../middleware/roles');
 const { httpError, COMMON_SHARED_FIELDS } = require('./revisionRules');
 const writeRepo = require('../repositories/writeRepo');
 
@@ -20,7 +21,9 @@ async function applyCommonEdit(args) {
     if (args.updates[f] !== undefined) safeUpdates[f] = args.updates[f];
   }
   if (Object.keys(safeUpdates).length === 0) throw httpError('No valid fields to update', 400);
-  return writeRepo.applyCommonEdit({ ...args, updates: safeUpdates });
+  // REQ-10 / T5.3: admin override of the all-or-nothing lock policy is honored only for admin role.
+  const adminOverride = Boolean(args.adminOverride) && hasRole(args.role, 'admin');
+  return writeRepo.applyCommonEdit({ ...args, updates: safeUpdates, adminOverride });
 }
 
 // G4: admin unlock — reason requirement is engine-agnostic.

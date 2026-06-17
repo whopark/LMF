@@ -57,7 +57,7 @@ async function applyItemEdit({ id, updates, editTypes = [], rawReason, user, rol
 }
 
 // G1 + G7: bulk propagation. `updates` is pre-filtered to COMMON_SHARED_FIELDS by the facade.
-async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], rawReason, user }) {
+async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], rawReason, user, adminOverride = false }) {
   const k = knex()
   const hasAreaScope = Array.isArray(areaCodes) && areaCodes.length > 0
   const qChange = updates.question !== undefined
@@ -76,6 +76,10 @@ async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], 
     for (const t of targets) {
       if (t.revision.locked) result.skipped_locked.push(t.item_number)
       else live.push(t)
+    }
+    // REQ-10 / T5.3: all-or-nothing lock policy — block on any locked target unless admin override.
+    if (result.skipped_locked.length > 0 && !adminOverride) {
+      throw httpError('Common edit blocked by locked field(s). Unlock first or use admin override.', 409, { blocked_locked: result.skipped_locked })
     }
     if (live.length === 0) return result
 

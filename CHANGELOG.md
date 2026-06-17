@@ -27,6 +27,13 @@ All notable changes to this project will be documented in this file.
   - `checklist_item.item_number` 생성컬럼 → 일반 text(소스 원본 보존), `field_code` 생성컬럼 신설(논리 분야 = item_number prefix)
   - PK `(area_code,common_key,year)` → `(area_code,item_number,year)`: 분할분야(임상미생물 area 36·수혈 46) PK 충돌 168 + 이상치 1 → 0
   - 검증: 9984 무손실 / 6570 content, 연도분포 2020~2026 일치, FK orphan 0, 이상치 21.405.120/2025 양분야 보존 (`pdf/verify_full.sql` V1~V13 PASS)
+- **SPEC-DB-001 Phase 4 (Repository 컷오버)**: 앱 런타임 Mongo↔PG 전환 (`DB_ENGINE=pg|mongo` 토글, 기본 mongo=무변경·즉시 롤백)
+  - 읽기 4종(filters·items·common·changes) + 쓰기 4종(applyItemEdit·applyCommonEdit·unlock·transition) Repository 추상화 + 트랜잭션(`knex.transaction`)
+  - 마이그레이션 005: item_revision에 edit_types jsonb + status_at_save (Revision 형상 무손실)
+- **SPEC-DB-001 Phase 5 — ⚠️ 동작 변경 (REQ-10 lock 정책)**: 공통문항 일괄편집의 lock 처리가 **부분 skip → all-or-nothing**으로 변경
+  - 대상 (common_key, year)에 locked 분야가 하나라도 있으면 편집 전체가 **409로 차단**(`blocked_locked` 반환, 부분 편집 없음)
+  - **admin 권한 + `admin_override: true`** 전송 시에만 locked 분야를 건너뛰고 나머지를 편집
+  - 단일편집(PATCH /items/:id)·transition은 기존대로 개별 lock guard(403) 유지
 
 ### Security
 - **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)

@@ -48,7 +48,7 @@ async function applyItemEdit({ id, updates, editTypes = [], rawReason, user, rol
 
 // G1 + G7: bulk propagation across a common_key. `updates` is pre-filtered to the shared
 // fields by the facade; every unlocked item update + revision commits atomically.
-async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], rawReason, user }) {
+async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], rawReason, user, adminOverride = false }) {
   const reasonFields = buildReasonFields(rawReason)
   return withTransaction(async (session) => {
     const query = { common_key: key }
@@ -58,6 +58,13 @@ async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], 
 
     const targets = await Item.find(query).session(session).lean()
     if (targets.length === 0) throw httpError('No items found for this common_key', 404)
+
+    // REQ-10 / T5.3: all-or-nothing lock policy — a locked target blocks the whole common edit
+    // unless an admin override is in effect (then locked areas are skipped).
+    const locked = targets.filter(t => t.revision?.locked).map(t => t.item_number)
+    if (locked.length > 0 && !adminOverride) {
+      throw httpError('Common edit blocked by locked field(s). Unlock first or use admin override.', 409, { blocked_locked: locked })
+    }
 
     const result = { updated: [], skipped_locked: [] }
     for (const item of targets) {

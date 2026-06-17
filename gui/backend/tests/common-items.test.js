@@ -151,23 +151,36 @@ describe('PATCH /api/common/:key — bulk update', () => {
     });
   });
 
-  it('skips locked items and reports them', async () => {
+  // REQ-10 / T5.3: all-or-nothing lock policy. A locked target blocks the whole common edit
+  // (no partial edits) unless an admin override is sent — then locked areas are skipped.
+  it('blocks a common edit when a target is locked; admin override skips locked', async () => {
     // Lock area01
     await Item.updateOne({ area_code: '01' }, {
       $set: { 'revision.status': 'final', 'revision.locked': true },
     });
 
-    const res = await request(app)
+    // Without override → 409, the whole edit is blocked and locked items are reported.
+    const blocked = await request(app)
       .patch('/api/common/010.001')
       .set('X-API-Key', API_KEY)
       .send({ question: '잠금 테스트' });
+    expect(blocked.status).toBe(409);
+    expect(blocked.body.blocked_locked).toContain('01.010.001');
 
+    // No partial edit: the unlocked sibling must remain unchanged.
+    const area90Before = await Item.findOne({ area_code: '90' }).lean();
+    expect(area90Before.question).toBe('공통 질문');
+
+    // Admin override (X-API-Key = admin) proceeds, skipping locked.
+    const res = await request(app)
+      .patch('/api/common/010.001')
+      .set('X-API-Key', API_KEY)
+      .send({ question: '잠금 테스트', admin_override: true });
     expect(res.status).toBe(200);
     expect(res.body.updated.length).toBe(1); // only area90 updated
-    expect(res.body.skipped_locked.length).toBe(1);
-    expect(res.body.skipped_locked[0]).toBe('01.010.001');
+    expect(res.body.skipped_locked).toContain('01.010.001');
 
-    // Locked item question must be unchanged
+    // Locked item question must be unchanged.
     const lockedItem = await Item.findOne({ area_code: '01' }).lean();
     expect(lockedItem.question).toBe('공통 질문');
   });

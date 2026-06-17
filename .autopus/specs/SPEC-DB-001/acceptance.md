@@ -90,10 +90,10 @@ And   verbatim raw_reason(item_revision)이 diff에 첨부됨
 ```
 Given common_key 'K'/year Y 의 분야 '01' 이 locked(final)
 When  admin 아닌 editor가 applyCommonEdit(K, Y, {description:'Z'})
-Then  편집은 차단되고 응답에 blocked_locked=['01'] 가 포함된다
-And   item_content 는 unchanged
-When  admin override 플래그로 동일 호출
-Then  편집이 적용된다(동작 변경이 CHANGELOG 에 문서화됨)
+Then  편집은 HTTP 409로 차단되고 응답에 blocked_locked=['01.010.001'](item_number, skipped_locked과 동일 형식) 가 포함된다
+And   item_content 는 unchanged (트랜잭션 롤백, 부분 편집 없음)
+When  admin 권한 + admin_override:true 플래그로 동일 호출
+Then  편집이 적용된다(locked 분야는 skipped_locked; 동작 변경 = 부분skip→all-or-nothing, CHANGELOG 문서화)
 ```
 
 ### AC-10: 분야특이 override 비전파 (REQ-8)
