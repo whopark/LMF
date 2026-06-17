@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const apiRoutes = require('./routes/api');
 const llmRoutes = require('./routes/llm');
+const { engine } = require('./config/db');
 
 const app = express();
 
@@ -51,7 +52,8 @@ if (hasFrontend) {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', version: '2.0.0', timestamp: '2026-05-05T20:00:00Z' });
+  // SPEC-DB-001 Phase 7: surface the active DB engine for cutover/rollback verification.
+  res.json({ status: 'ok', version: '2.0.0', engine: engine(), timestamp: '2026-05-05T20:00:00Z' });
 });
 
 // API version endpoint

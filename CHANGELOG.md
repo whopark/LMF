@@ -38,6 +38,11 @@ All notable changes to this project will be documented in this file.
   - 키워드 검색은 **ILIKE 부분검색** 채택 — tsvector simple은 한국어 형태소 미지원으로 재현율 낮음(실측 '검사실' ILIKE 1698 vs tsvector 845, AC-7 재현율 ≥ 현행 충족)
   - canonical 쿼리셋 `pdf/verify_search.sql`(S1~S7): item# 부분검색·키워드·edit_type 조인·수정자/일자·연도 diff(2026 NEW 154/DELETED 4/공통 1481)
   - tsvector GIN 인덱스는 차기 한국어 토크나이저(mecab/pgroonga)용 보존; PG-vs-Mongo 직접 parity는 Phase 7 컷오버 검증으로 이연(Mongo 데이터 부재)
+- **SPEC-DB-001 Phase 7 (컷오버·롤백)**: 앱 런타임 `DB_ENGINE` 토글을 server.js에 배선 (하이브리드: 컷오버 경로 PG, 미컷오버 경로 Mongo)
+  - server.js: `DB_ENGINE=pg` 기동 시 PG 연결 검증(fail-fast) + 엔진 로깅; Mongo는 항상 연결
+  - app.js `/health`: `engine` 필드 노출(컷오버/롤백 확인)
+  - 스모크(DB_ENGINE=pg, HTTP): /health engine=pg · filters(years7/areas14) · items?year=2026 total 1635 · common/010.090 14분야 · changes/2026 NEW154/MOD1335/DEL4 → HTTP→routes→repo→PG 엔드투엔드
+  - **롤백**: `DB_ENGINE` 미설정 → mongo 즉시 복귀(Mongo 보존). 전체 PG-only(Mongo 폐기)는 잔여 read(export·auth·users·revisions-list) 컷오버 후속
 
 ### Security
 - **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)
