@@ -1,7 +1,7 @@
 const express = require('express');
-const Worklist = require('../models/Worklist');
 const { requireAuth } = require('../middleware/roles');
 const { serverError } = require('../utils/httpError');
+const worklistRepo = require('../repositories/worklistRepo');
 
 const router = express.Router();
 
@@ -10,25 +10,19 @@ function getUser(req) {
   return req.user?.name || 'unknown';
 }
 
-// GET /api/worklists — current user's worklist (viewer+)
+// GET /api/worklists — current user's worklist (viewer+). Engine via worklistRepo factory.
 router.get('/', requireAuth('viewer'), async (req, res) => {
   try {
     const user = getUser(req);
     const year = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
-
-    const worklist = await Worklist.findOne({ user, year }).lean();
-    res.json({
-      user,
-      year,
-      item_numbers: worklist?.item_numbers || [],
-      updated_at: worklist?.updated_at || null,
-    });
+    const { item_numbers, updated_at } = await worklistRepo.get(user, year);
+    res.json({ user, year, item_numbers, updated_at });
   } catch (err) {
     serverError(res, err, 'GET /worklists');
   }
 });
 
-// PUT /api/worklists — save worklist (editor+, must be own data)
+// PUT /api/worklists — save worklist (editor+, own data only)
 router.put('/', requireAuth('editor'), async (req, res) => {
   try {
     const user = getUser(req);
@@ -38,13 +32,8 @@ router.put('/', requireAuth('editor'), async (req, res) => {
       return res.status(400).json({ message: 'item_numbers must be an array' });
     }
 
-    const worklist = await Worklist.findOneAndUpdate(
-      { user, year: parseInt(year) },
-      { item_numbers, updated_at: new Date() },
-      { upsert: true, new: true }
-    ).lean();
-
-    res.json({ user, year: worklist.year, item_numbers: worklist.item_numbers });
+    const saved = await worklistRepo.set(user, parseInt(year), item_numbers);
+    res.json({ user, year: saved.year, item_numbers: saved.item_numbers });
   } catch (err) {
     serverError(res, err, 'PUT /worklists');
   }
@@ -55,11 +44,7 @@ router.delete('/', requireAuth('editor'), async (req, res) => {
   try {
     const user = getUser(req);
     const year = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
-
-    await Worklist.findOneAndUpdate(
-      { user, year },
-      { item_numbers: [], updated_at: new Date() }
-    );
+    await worklistRepo.clear(user, year);
     res.json({ user, year, item_numbers: [] });
   } catch (err) {
     serverError(res, err, 'DELETE /worklists');

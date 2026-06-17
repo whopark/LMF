@@ -1,26 +1,22 @@
 const { serverError } = require('../utils/httpError');
 const express = require('express');
-const Item = require('../models/Item');
-const Revision = require('../models/Revision');
 const { requireAuth } = require('../middleware/roles');
 const { normalizeKo } = require('../utils/normalizeKo');
-const { areaCodeClause } = require('../utils/areaFilter');
+const changesRepo = require('../repositories/changesRepo');
 
 const router = express.Router();
 
-// GET /api/changes/:year — year-over-year diff (G-Y1: viewer+ 인증)
+// GET /api/changes/:year — year-over-year diff (G-Y1: viewer+ 인증).
+// Read path: engine via changesRepo (mongo|pg). Diff/snapshot/normalize is pure (below).
 router.get('/:year', requireAuth('viewer'), async (req, res) => {
   try {
     const targetYear = parseInt(req.params.year);
     const { area } = req.query;
     const prevYear = targetYear - 1;
 
-    const clause = areaCodeClause(area);
-    const baseQuery = clause !== undefined ? { area_code: clause } : {};
-
     const [targetItems, prevItems] = await Promise.all([
-      Item.find({ year: targetYear, ...baseQuery }).lean(),
-      Item.find({ year: prevYear, ...baseQuery }).lean(),
+      changesRepo.getYearItems(targetYear, area),
+      changesRepo.getYearItems(prevYear, area),
     ]);
 
     const prevMap = new Map(prevItems.map(i => [i.item_number, i]));
@@ -111,19 +107,12 @@ function detectChanges(current, prev) {
   return parts.length ? parts.join(', ') : null;
 }
 
-// G-Y4: attach the latest target-year Revision.reason (verbatim) to each change.current.
-// Single batch query (item_number $in) avoids N+1.
+// G-Y4: attach the latest target-year reason (verbatim) to each change.current.
 async function attachVerbatimReasons(changes, targetYear) {
   const codes = changes.filter(c => c.current).map(c => c.item_number);
   if (codes.length === 0) return;
 
-  const revisions = await Revision.find({ year: targetYear, item_number: { $in: codes } })
-    .sort({ at: -1 }).lean();
-
-  const latest = new Map();
-  for (const rev of revisions) {
-    if (!latest.has(rev.item_number)) latest.set(rev.item_number, rev.reason || '');
-  }
+  const latest = await changesRepo.getRevisionReasons(targetYear, codes);
   for (const c of changes) {
     if (c.current && latest.has(c.item_number)) c.current.reason = latest.get(c.item_number);
   }

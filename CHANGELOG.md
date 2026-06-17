@@ -18,6 +18,36 @@ All notable changes to this project will be documented in this file.
   - esbuild ≤0.28.0 (GHSA-gv7w-rqvm-qjhr) 해소, npm audit high 0 (REQ-2)
   - vitest 4.1.5 유지(이미 vite 8 호환), engines.node 명시 + CI node 20→22 (REQ-9/10)
   - 검증: build·build:gh(/LMF/)·test:run(55/55)·audit(0) 전 AC PASS — 멀티 프로바이더 리뷰(claude+gemini) PASS
+- **SPEC-PDF-001**: PDF→PG 적재 로더 구현 + 2026 적재·검증 완료 (부분)
+  - `pdf/import_to_pg.py` + `pg_load.py`: flat_v2.json → PG 정규화 스키마 적재 (멱등 ON CONFLICT, dry-run 기본, 배치 트랜잭션 경계, 위반 리포트, 참조 시드) (REQ-1~8)
+  - 2026 적재: checklist_item 1635 / item_content 1026 (dedup 609 제거), 무손실, AC-3/4/5/13 위반 0, FK orphan 0
+  - `verify_2026.sql` AC 오라클 V1~V11 PASS · 멀티 프로바이더 리뷰(claude+gemini) PASS
+  - 전체 적재 완료(2020~2026): checklist_item 9984 / item_content 6570 — SPEC-DB-001 분할분야 스키마 개정(`ee50eca`) 후
+- **SPEC-DB-001 (개정)**: 분할분야 스키마 — 전체 9984 적재 가능화
+  - `checklist_item.item_number` 생성컬럼 → 일반 text(소스 원본 보존), `field_code` 생성컬럼 신설(논리 분야 = item_number prefix)
+  - PK `(area_code,common_key,year)` → `(area_code,item_number,year)`: 분할분야(임상미생물 area 36·수혈 46) PK 충돌 168 + 이상치 1 → 0
+  - 검증: 9984 무손실 / 6570 content, 연도분포 2020~2026 일치, FK orphan 0, 이상치 21.405.120/2025 양분야 보존 (`pdf/verify_full.sql` V1~V13 PASS)
+- **SPEC-DB-001 Phase 4 (Repository 컷오버)**: 앱 런타임 Mongo↔PG 전환 (`DB_ENGINE=pg|mongo` 토글, 기본 mongo=무변경·즉시 롤백)
+  - 읽기 4종(filters·items·common·changes) + 쓰기 4종(applyItemEdit·applyCommonEdit·unlock·transition) Repository 추상화 + 트랜잭션(`knex.transaction`)
+  - 마이그레이션 005: item_revision에 edit_types jsonb + status_at_save (Revision 형상 무손실)
+- **SPEC-DB-001 Phase 5 — ⚠️ 동작 변경 (REQ-10 lock 정책)**: 공통문항 일괄편집의 lock 처리가 **부분 skip → all-or-nothing**으로 변경
+  - 대상 (common_key, year)에 locked 분야가 하나라도 있으면 편집 전체가 **409로 차단**(`blocked_locked` 반환, 부분 편집 없음)
+  - **admin 권한 + `admin_override: true`** 전송 시에만 locked 분야를 건너뛰고 나머지를 편집
+  - 단일편집(PATCH /items/:id)·transition은 기존대로 개별 lock guard(403) 유지
+- **SPEC-DB-001 Phase 6 (검색·연도추적 parity)**: T6.1(검색)·T6.2(연도 diff)는 Phase 4(items search_field·changes)에서 구현, T6.3 검증
+  - 키워드 검색은 **ILIKE 부분검색** 채택 — tsvector simple은 한국어 형태소 미지원으로 재현율 낮음(실측 '검사실' ILIKE 1698 vs tsvector 845, AC-7 재현율 ≥ 현행 충족)
+  - canonical 쿼리셋 `pdf/verify_search.sql`(S1~S7): item# 부분검색·키워드·edit_type 조인·수정자/일자·연도 diff(2026 NEW 154/DELETED 4/공통 1481)
+  - tsvector GIN 인덱스는 차기 한국어 토크나이저(mecab/pgroonga)용 보존; PG-vs-Mongo 직접 parity는 Phase 7 컷오버 검증으로 이연(Mongo 데이터 부재)
+- **SPEC-DB-001 Phase 7 (컷오버·롤백)**: 앱 런타임 `DB_ENGINE` 토글을 server.js에 배선 (하이브리드: 컷오버 경로 PG, 미컷오버 경로 Mongo)
+  - server.js: `DB_ENGINE=pg` 기동 시 PG 연결 검증(fail-fast) + 엔진 로깅; Mongo는 항상 연결
+  - app.js `/health`: `engine` 필드 노출(컷오버/롤백 확인)
+  - 스모크(DB_ENGINE=pg, HTTP): /health engine=pg · filters(years7/areas14) · items?year=2026 total 1635 · common/010.090 14분야 · changes/2026 NEW154/MOD1335/DEL4 → HTTP→routes→repo→PG 엔드투엔드
+  - **롤백**: `DB_ENGINE` 미설정 → mongo 즉시 복귀(Mongo 보존). 전체 PG-only(Mongo 폐기)는 잔여 read(export·auth·users·revisions-list) 컷오버 후속
+- **SPEC-DB-001 Phase 8 (테스트 이행)**: PG 엔진 통합 테스트 추가
+  - `tests/pg-engine.test.js`: 격리 PG(Docker lmf-pg의 `lab_accreditation_test`, 마이그레이션+시드)에서 DB_ENGINE=pg 경로 7종 검증 — filters·items(de-projection)·common·applyItemEdit(override+revision)·applyCommonEdit(AC-2 공유전파)·lock 정책(409+override)·transition(atomic guard)
+  - PG 미가용 시 우아하게 skip(CI/로컬 docker 없을 때 무중단; `PGTEST_*` env로 호스트 override)
+  - 전체 스위트 green: **22 파일 / 216 테스트**(기존 21 mongo + 신규 1 pg)
+  - 기존 21 mongo-path 테스트 유지(MongoMemoryReplSet); CI에 PostgreSQL 서비스 추가는 후속
 
 ### Security
 - **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)

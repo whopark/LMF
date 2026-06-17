@@ -18,8 +18,9 @@
 | Backend Config | dotenv | 16.6.x |
 | Backend Security | express-rate-limit | 7.5.x, cors |
 | Database | MongoDB | (외부 설치, 7+ 호환) |
+| Database (마이그레이션) | PostgreSQL | 17 (Docker lmf-pg:5435, SPEC-DB-001 스키마) |
 | LLM API | Anthropic Claude | claude-haiku-4-5 (env로 override 가능) |
-| Data ETL | Python | 3.x (pdf/ 스크립트들) |
+| Data ETL | Python | 3.x (pdf/ 스크립트들 · psycopg 3.x PG 적재) |
 | Harness | Autopus-ADK | 0.4 |
 
 ## Build / Run 명령
