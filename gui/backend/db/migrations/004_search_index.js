@@ -16,6 +16,7 @@ exports.up = async (knex) => {
 
     CREATE INDEX idx_checklist_item_year_area   ON checklist_item (year, area_code, common_key);
     CREATE INDEX idx_checklist_item_common_year ON checklist_item (common_key, year);
+    CREATE INDEX idx_checklist_item_field_year  ON checklist_item (field_code, year);
 
     CREATE INDEX idx_item_revision_item_at      ON item_revision (item_number, revised_at DESC);
   `)
@@ -24,6 +25,7 @@ exports.up = async (knex) => {
 exports.down = async (knex) => {
   await knex.raw(`
     DROP INDEX IF EXISTS idx_item_revision_item_at,
+                         idx_checklist_item_field_year,
                          idx_checklist_item_common_year,
                          idx_checklist_item_year_area,
                          idx_item_content_question_trgm,

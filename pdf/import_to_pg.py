@@ -67,14 +67,14 @@ CONTENT_SQL = (
     "description=EXCLUDED.description,blocks=EXCLUDED.blocks")
 
 ITEM_SQL = (
-    "INSERT INTO checklist_item(area_code,common_key,year,item_order,classification,score,"
+    "INSERT INTO checklist_item(area_code,common_key,year,item_number,item_order,classification,score,"
     "na_available,field_specific_description,question_override,description_override,"
     "rev_status,locked,revised,last_modified_user,last_modified_at,source) "
-    "VALUES(%(area_code)s,%(common_key)s,%(year)s,%(item_order)s,%(classification)s,%(score)s,"
+    "VALUES(%(area_code)s,%(common_key)s,%(year)s,%(item_number)s,%(item_order)s,%(classification)s,%(score)s,"
     "%(na_available)s,%(field_specific_description)s,%(question_override)s,%(description_override)s,"
     "%(rev_status)s,%(locked)s,%(revised)s,%(last_modified_user)s,%(last_modified_at)s,%(source)s) "
-    "ON CONFLICT(area_code,common_key,year) DO UPDATE SET "
-    "item_order=EXCLUDED.item_order,classification=EXCLUDED.classification,score=EXCLUDED.score,"
+    "ON CONFLICT(area_code,item_number,year) DO UPDATE SET "
+    "common_key=EXCLUDED.common_key,item_order=EXCLUDED.item_order,classification=EXCLUDED.classification,score=EXCLUDED.score,"
     "na_available=EXCLUDED.na_available,field_specific_description=EXCLUDED.field_specific_description,"
     "question_override=EXCLUDED.question_override,description_override=EXCLUDED.description_override,"
     "rev_status=EXCLUDED.rev_status,locked=EXCLUDED.locked,revised=EXCLUDED.revised,"
@@ -107,7 +107,7 @@ def write_report(path, src_n, content_n, item_n, anomalies, dup_keys, mism, par)
              f"- source records: {src_n}",
              f"- item_content rows: {content_n} | checklist_item rows: {item_n}",
              f"- loaded + quarantined = {item_n + len(dup_keys)} (== source: {item_n + len(dup_keys) == src_n})",
-             f"- item_number mismatch (AC-13): {len(mism)}",
+             f"- split-area rows (area_code != item_number prefix, 정상 보존): {len(mism)}",
              "", "## 이상치(드롭 0, 정규화+리포트)"]
     for k, c in sorted(by_type.items()):
         lines.append(f"- {k}: {c}")

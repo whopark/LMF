@@ -76,8 +76,8 @@ def transform(records):
             "question": base_q, "description": base_d, "blocks": _blocks(base),
         }
         for r in rs_sorted:
-            pk = (r["area_code"], ck, year)
-            if pk in seen:                       # AC-5 duplicate (area,key,year)
+            pk = (r["area_code"], r["item_number"], year)   # PK (area_code, item_number, year): 분할분야 충돌 0
+            if pk in seen:                       # AC-5 duplicate (area, item_number, year)
                 dup_keys.append(pk)
                 anomalies.append((r["item_number"], r["area_code"], "duplicate_key", str(pk)))
                 continue
@@ -94,6 +94,7 @@ def transform(records):
             q, d = r.get("question"), (r.get("description") or None)
             item_rows.append({
                 "area_code": r["area_code"], "common_key": ck, "year": year,
+                "item_number": r["item_number"],   # 소스 원본 저장 (생성컬럼 폐기, 분할분야 parity)
                 "item_order": r.get("item_order"),
                 "classification": cls, "score": score,
                 "na_available": bool(r.get("na_available")),
