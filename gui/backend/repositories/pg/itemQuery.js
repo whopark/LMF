@@ -52,4 +52,21 @@ function toLean(r) {
   }
 }
 
-module.exports = { base, cols, toLean }
+// Decode the synthetic _id (`area_code.item_number.year`) back to PK parts.
+// area_code = first segment (char(2)), year = last segment (4 digits), item_number = the
+// middle (it contains dots itself). Returns null if malformed. encodeId mirrors toLean's _id.
+function encodeId(area_code, item_number, year) {
+  return `${area_code}.${item_number}.${year}`
+}
+
+function decodeId(id) {
+  const parts = String(id ?? '').split('.')
+  if (parts.length < 3) return null
+  const area_code = parts[0]
+  const year = parseInt(parts[parts.length - 1], 10)
+  const item_number = parts.slice(1, -1).join('.')
+  if (!area_code || !item_number || !Number.isFinite(year)) return null
+  return { area_code, item_number, year }
+}
+
+module.exports = { base, cols, toLean, encodeId, decodeId }

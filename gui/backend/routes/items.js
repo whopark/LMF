@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const { requireAuth } = require('../middleware/roles');
 const { serverError } = require('../utils/httpError');
 const { applyItemEdit } = require('../services/revisionTxn');
@@ -92,11 +91,7 @@ router.get('/:code', async (req, res) => {
 router.patch('/:id', requireAuth('editor'), async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Invalid document ID format' });
-    }
-
+    // id format validation is engine-specific (ObjectId vs synthetic key) → handled in writeRepo.
     const updates = {};
     let hasValid = false;
     for (const [reqField, modelField] of Object.entries(PATCH_FIELD_MAP)) {

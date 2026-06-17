@@ -1,72 +1,26 @@
 // Design Ref: §5.3 — transactional orchestration for revision writes (G1).
-// All item mutations + revision logs + audit logs commit atomically so a failed
-// revision write rolls back the item change (no history gaps). Plan SC-1.
+// Phase 4b: applyItemEdit is delegated to the engine write repo (mongo|pg). applyCommonEdit
+// and unlockItem stay on Mongo until Phase 4b-2/3. Engine-agnostic gating + pure rules
+// (snapshot/shared-fields/httpError) live in revisionRules.js.
 const Item = require('../models/Item');
 const Revision = require('../models/Revision');
 const AuditLog = require('../models/AuditLog');
 const { withTransaction } = require('../utils/withTransaction');
 const { buildReasonFields } = require('../utils/reason');
 const { assertEditTypesAllowed } = require('../constants/sensitiveEditTypes');
+const { pickSnapshot, httpError, COMMON_SHARED_FIELDS } = require('./revisionRules');
+const writeRepo = require('../repositories/writeRepo');
 
-// Fields captured in a Revision before/after snapshot.
-const SNAPSHOT_FIELDS = ['question', 'description', 'score', 'classification', 'na_available'];
-
-// Design Ref: §8 (G7) — fields propagated to common items. field_specific_description is
-// intentionally absent: it is a per-area override and must never be overwritten by propagation.
-const COMMON_SHARED_FIELDS = ['question', 'description', 'score'];
-
-function pickSnapshot(doc) {
-  const snap = {};
-  for (const f of SNAPSHOT_FIELDS) snap[f] = doc[f];
-  return snap;
+// G1: single-item edit — engine write repo handles the atomic item + revision + audit write.
+// G6 sensitive-type gating is engine-agnostic, so it runs here before delegation.
+async function applyItemEdit(args) {
+  assertEditTypesAllowed(args.editTypes || [], args.role);
+  return writeRepo.applyItemEdit(args);
 }
 
-function httpError(message, status) {
-  const e = new Error(message);
-  e.status = status;
-  return e;
-}
-
-// G1: single-item edit — item update + revision + audit committed atomically.
-async function applyItemEdit({ id, updates, editTypes = [], rawReason, user, role, ip }) {
-  assertEditTypesAllowed(editTypes, role); // G6: sensitive types require approver+
-  return withTransaction(async (session) => {
-    const existing = await Item.findById(id).session(session).lean();
-    if (!existing) throw httpError('Item not found', 404);
-
-    const setUpdates = { ...updates, last_modified: { user, at: new Date() } };
-    if ((existing.revision?.status || 'none') === 'none') setUpdates['revision.status'] = 'draft';
-
-    // Atomic lock guard (G5): locked items return null instead of updating.
-    const updated = await Item.findOneAndUpdate(
-      { _id: id, 'revision.locked': { $ne: true } },
-      { $set: setUpdates },
-      { new: true, runValidators: true, session },
-    ).lean();
-    if (!updated) throw httpError('Item is locked (final status). Unlock required.', 403);
-
-    const scoreChanged = updates.score !== undefined && updates.score !== existing.score;
-
-    await Revision.create([{
-      item_number: existing.item_number, area_code: existing.area_code,
-      common_key: existing.common_key, year: existing.year, user,
-      edit_types: editTypes, ...buildReasonFields(rawReason),
-      before: pickSnapshot(existing), after: pickSnapshot(updated),
-      status_at_save: existing.revision?.status || 'none', score_changed: scoreChanged,
-    }], { session });
-
-    await AuditLog.create([{
-      user, role, action: 'patch_item', resource_type: 'item', resource_id: String(id),
-      details: { item_number: existing.item_number, score_changed: scoreChanged }, ip,
-    }], { session });
-
-    return { updated, scoreChanged };
-  });
-}
-
-// G1 + G7: bulk propagation across a common_key — every item update + revision commits atomically.
+// G1 + G7: bulk propagation across a common_key (still Mongo; Phase 4b-2).
 async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], rawReason, user, role }) {
-  assertEditTypesAllowed(editTypes, role); // G6: sensitive types require approver+
+  assertEditTypesAllowed(editTypes, role); // G6
   const safeUpdates = {};
   for (const f of COMMON_SHARED_FIELDS) {
     if (updates[f] !== undefined) safeUpdates[f] = updates[f];
@@ -109,8 +63,7 @@ async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], 
   });
 }
 
-// G4: admin unlock — clears the lock, returns the item to 'review' so it can be re-finalized,
-// and records the required reason in the audit log. Unlimited per Plan decision.
+// G4: admin unlock (still Mongo; Phase 4b-3).
 async function unlockItem({ id, rawReason, user, role, ip }) {
   const reason = rawReason === null || rawReason === undefined ? '' : String(rawReason);
   if (reason.trim().length === 0) throw httpError('Unlock reason is required', 400);
