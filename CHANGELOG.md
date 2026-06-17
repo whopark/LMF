@@ -43,6 +43,11 @@ All notable changes to this project will be documented in this file.
   - app.js `/health`: `engine` 필드 노출(컷오버/롤백 확인)
   - 스모크(DB_ENGINE=pg, HTTP): /health engine=pg · filters(years7/areas14) · items?year=2026 total 1635 · common/010.090 14분야 · changes/2026 NEW154/MOD1335/DEL4 → HTTP→routes→repo→PG 엔드투엔드
   - **롤백**: `DB_ENGINE` 미설정 → mongo 즉시 복귀(Mongo 보존). 전체 PG-only(Mongo 폐기)는 잔여 read(export·auth·users·revisions-list) 컷오버 후속
+- **SPEC-DB-001 Phase 8 (테스트 이행)**: PG 엔진 통합 테스트 추가
+  - `tests/pg-engine.test.js`: 격리 PG(Docker lmf-pg의 `lab_accreditation_test`, 마이그레이션+시드)에서 DB_ENGINE=pg 경로 7종 검증 — filters·items(de-projection)·common·applyItemEdit(override+revision)·applyCommonEdit(AC-2 공유전파)·lock 정책(409+override)·transition(atomic guard)
+  - PG 미가용 시 우아하게 skip(CI/로컬 docker 없을 때 무중단; `PGTEST_*` env로 호스트 override)
+  - 전체 스위트 green: **22 파일 / 216 테스트**(기존 21 mongo + 신규 1 pg)
+  - 기존 21 mongo-path 테스트 유지(MongoMemoryReplSet); CI에 PostgreSQL 서비스 추가는 후속
 
 ### Security
 - **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)
