@@ -133,4 +133,6 @@ Then  갱신분이 PG에 멱등 반영(AC-6)
 | AC-13 | item_number parity | mismatch 0 | ✅ |
 | FK | orphan 0 | 0 | ✅ |
 
-**AC-1 전체(9984/6566) 미충족**: 2020~2025 분할분야 PK 충돌 → SPEC-DB-001 스키마 개정 후 적재.
+**AC-1 전체 적재 완료 (2026-06-17 · commit `ee50eca`, SPEC-DB-001 분할분야 스키마 개정 후):**
+item_content **6570**(구 추정 6566) / checklist_item **9984** 전량 무손실. PK 충돌 168+1 → 0,
+연도분포 2020~2026 일치, 분할분야 1756행·이상치 21.405.120/2025 양분야 보존. `verify_full.sql` V1~V13 PASS.

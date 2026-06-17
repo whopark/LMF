@@ -7,11 +7,11 @@
 
 ### AC-1: 공유 콘텐츠 1행 정규화 (REQ-1)
 ```
-Given ETL parity 완료된 PG (단, 21.405.120/2025 중복은 AC-5대로 23.405.120 으로 해소된 상태)
+Given PDF 적재 완료된 PG (PK=(area_code,item_number,year); 21.405.120/2025는 area 21·23 양분야 적재)
 When  SELECT count(*) FROM item_content;  AND  SELECT count(*) FROM checklist_item;
-Then  item_content 행 수 = 6566 (distinct (year,common_key))
+Then  item_content 행 수 = 6570 (distinct (year,common_key))   -- 개정 실측(구 추정 6566)
 And   checklist_item 행 수 = 9984
-And   행 수 차이 3418 = 공통문항 중복 제거분과 일치
+And   행 수 차이 3414 = 공통문항 중복 제거분과 일치
 ```
 
 ### AC-2: 공통 편집 = 단일 content UPDATE 전파 (REQ-3)
@@ -45,12 +45,14 @@ When  INSERT (classification=NULL, score=2) 를 시도
 Then  쓰기는 성공한다(미해결 분류는 허용)
 ```
 
-### AC-5: 분야-연도 UNIQUE 중복 차단 (REQ-2, REQ-5)
+### AC-5: 분야-문항-연도 UNIQUE 중복 차단 (REQ-2, REQ-5)
 ```
-Given area_code='21', common_key='405.120', year=2025 행이 이미 존재
-When  동일 (area_code, common_key, year) 두 번째 INSERT 시도
+Given area_code='21', item_number='21.405.120', year=2025 행이 이미 존재
+When  동일 (area_code, item_number, year) 두 번째 INSERT 시도
 Then  쓰기는 UNIQUE 위반으로 거부된다(SQLSTATE 23505)
-And   테이블에 해당 키 행은 정확히 1개 (21.405.120/2025 중복 재발 불가)
+And   테이블에 해당 키 행은 정확히 1개
+Note  개정(2026-06-17): PK가 (area_code,item_number,year)로 변경 → 분할분야(area 36/46에 논리
+      prefix 다른 문항 공존) + 21.405.120/2025(area 21·23)가 충돌 없이 적재(충돌 168+1 → 0)
 ```
 
 ### AC-6: ETL 무손실 + 위반 리포트 (REQ-6)

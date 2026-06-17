@@ -25,10 +25,11 @@
 
 | Mongo 필드 | 타입 | → PG | 변환/비고 |
 |---|---|---|---|
-| `item_number` | String | `checklist_item.item_number` | **GENERATED** = `area_code‖'.'‖common_key` (저장 안 함, 생성) |
-| `area_code` | String | `checklist_item.area_code` | FK → `area` |
-| `common_key` | String | PK 일부 (양 테이블) | item_number 끝 7자(`NNN.NNN`)에서 파생(현 pre-save) |
-| `year` | Number | PK 일부 | smallint |
+| `item_number` | String | `checklist_item.item_number` | **소스 원본 저장**(개정 2026-06-17, 생성컬럼 폐기) — 분할분야 논리 prefix 보존. PK 일부 |
+| `area_code` | String | `checklist_item.area_code` | FK → `area`. PK 일부 (물리 분야) |
+| — (item_number prefix) | — | `checklist_item.field_code` | **GENERATED** = `split_part(item_number,'.',1)` — 논리 분야(임상미생물 30~36, 수혈 40~46) |
+| `common_key` | String | `checklist_item.common_key` + FK→`item_content` | item_number 끝 7자(`NNN.NNN`). 개정 후 PK 아님(FK만) |
+| `year` | Number | PK 일부 | smallint. PK = (area_code, item_number, year) |
 | `area_name` | String | `area.name` | 참조 테이블로 정규화 |
 | `sub_category` | String | `item_content.sub_category_id` | FK → `sub_category` (텍스트→id, `classification_map.json` 10코드·display_order) |
 | `sub_category_order` | Number | `sub_category.display_order` | 참조 테이블 |

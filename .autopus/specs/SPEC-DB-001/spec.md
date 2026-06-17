@@ -82,14 +82,22 @@
 | `edit_type_code` | code | 수정유형 드롭다운 |
 | `app_user` | id | 역할(viewer/editor/approver/admin) |
 | `item_content` | (common_key, year) | **공유 콘텐츠 1행** = question/description/blocks/sub_category |
-| `checklist_item` | (area_code, common_key, year) | 분야 투영: item_order/classification/score/na/분야특이·override/rev_status/locked/revised/last_modified/source |
+| `checklist_item` | (area_code, item_number, year) | 분야 투영: item_order/classification/score/na/분야특이·override/rev_status/locked/revised/last_modified/source/field_code |
 | `item_revision` | id | 불변 개정 이력(before/after/reason/hash) |
 | `audit_log` | id | 감사 이벤트 |
 | `revision_worklist` | id | 사용자별 개정 워크리스트 |
 | `checklist_import` | id | PDF 파싱 메타(현 `lab_checklists_2026_v8`) |
 
 핵심 효과: 공통 편집 = `item_content` 1행 UPDATE → 전 분야 자동 반영. workflow/lock은 분야 행에
-독립 유지. `item_number`는 `area_code||'.'||common_key` 생성 컬럼.
+독립 유지. `item_number`는 소스 원본을 그대로 저장(분할분야 논리 prefix 보존), `field_code`는
+`split_part(item_number,'.',1)` 생성컬럼(논리 분야).
+
+> **개정 (2026-06-17): 분할분야 스키마.** 임상미생물(물리 area 36)·수혈의학(area 46)은 여러 논리
+> 분야가 한 물리 area_code에 통합 저장되고 item_number가 논리 prefix를 보존(예: area 36 + 30.301.340).
+> 구 스키마(item_number 생성컬럼 = area_code‖common_key, PK (area_code,common_key,year))는 168 PK 충돌 +
+> 이상치 1(21.405.120/2025)로 9815만 적재됐다. → `item_number` 생성컬럼 폐기·소스 원본 저장, `field_code`
+> 생성컬럼 신설, PK를 **(area_code, item_number, year)**로 변경 → 충돌 0, **전체 9984 무손실 적재 완료**
+> (item_content 6570). 마이그레이션 `002_items.js`/`004_search_index.js`, 적재 `pdf/import_to_pg.py`(commit `ee50eca`).
 
 ## 5. Feature Completion Scope
 

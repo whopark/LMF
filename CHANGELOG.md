@@ -22,7 +22,11 @@ All notable changes to this project will be documented in this file.
   - `pdf/import_to_pg.py` + `pg_load.py`: flat_v2.json → PG 정규화 스키마 적재 (멱등 ON CONFLICT, dry-run 기본, 배치 트랜잭션 경계, 위반 리포트, 참조 시드) (REQ-1~8)
   - 2026 적재: checklist_item 1635 / item_content 1026 (dedup 609 제거), 무손실, AC-3/4/5/13 위반 0, FK orphan 0
   - `verify_2026.sql` AC 오라클 V1~V11 PASS · 멀티 프로바이더 리뷰(claude+gemini) PASS
-  - 2020~2025는 분할분야 PK 충돌로 SPEC-DB-001 스키마 개정 후 적재 예정 (AC-1 전체 9984/6566 미충족)
+  - 전체 적재 완료(2020~2026): checklist_item 9984 / item_content 6570 — SPEC-DB-001 분할분야 스키마 개정(`ee50eca`) 후
+- **SPEC-DB-001 (개정)**: 분할분야 스키마 — 전체 9984 적재 가능화
+  - `checklist_item.item_number` 생성컬럼 → 일반 text(소스 원본 보존), `field_code` 생성컬럼 신설(논리 분야 = item_number prefix)
+  - PK `(area_code,common_key,year)` → `(area_code,item_number,year)`: 분할분야(임상미생물 area 36·수혈 46) PK 충돌 168 + 이상치 1 → 0
+  - 검증: 9984 무손실 / 6570 content, 연도분포 2020~2026 일치, FK orphan 0, 이상치 21.405.120/2025 양분야 보존 (`pdf/verify_full.sql` V1~V13 PASS)
 
 ### Security
 - **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)

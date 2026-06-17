@@ -1,6 +1,6 @@
 # SPEC-PDF-001 · 기존 PDF 파서 재사용 → PG 적재 (PDF 구조 데이터 PG 로드)
 
-- Status: implemented (2026 적재·검증 완료 · 2020~2025 SPEC-DB-001 스키마 개정 대기)
+- Status: completed (전체 9984 적재·검증 완료 · SPEC-DB-001 분할분야 스키마 개정 ee50eca)
 - Priority: Must
 - Owner: 메인 세션
 - Created: 2026-06-17
@@ -74,6 +74,7 @@ sibling SPEC. PG 스키마/제약은 SPEC-DB-001 소유(본 SPEC은 데이터만
 | AC-13 item_number parity | mismatch 0 ✓ |
 | 시드 | area 22 · class 3 · sub_category 93 ✓ |
 
-**AC-1 전체(9984/6566) 미충족** — 2020~2025는 분할분야(임상미생물 30→31~36, 수혈 40→41~46)
-논리 item_number ↔ 물리 area_code PK 충돌(169건)로 적재 차단. SPEC-DB-001 스키마 개정
-(item_number STORED, PK 재설계) 후 적재 예정.
+**AC-1 전체 적재 완료 (2026-06-17, commit `ee50eca`)** — SPEC-DB-001 분할분야 스키마 개정
+(item_number 생성컬럼→소스 저장, `field_code` 신설, PK `(area_code,item_number,year)`)으로 분할분야
+PK 충돌 168+1 → **0**. **전체 9984 무손실 / item_content 6570** 적재, 연도분포 2020~2026 일치,
+분할분야 1756행·이상치 21.405.120/2025 양분야 보존. `pdf/verify_full.sql` V1~V13 PASS.

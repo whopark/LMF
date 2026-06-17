@@ -61,7 +61,9 @@ d:/LMF_all/
 │   ├── import_to_mongodb.py          # ⭐ 메인 import 스크립트 (Mongo)
 │   ├── import_to_pg.py               # ⭐ PG 적재 (SPEC-PDF-001, psycopg)
 │   ├── pg_load.py                    # PG 적재 순수 변환 로직 (dedup/이상치/parity)
-│   ├── verify_2026.sql               # PG 적재 AC 오라클 검증 스위트
+│   ├── verify_2026.sql               # PG 적재 AC 오라클 검증 (2026)
+│   ├── verify_full.sql               # PG 적재 AC 오라클 검증 (전체 + 분할분야)
+│   ├── diag_split.py                 # 분할분야 충돌 진단 스크립트
 │   ├── import_verification_reports_v4.py  # ⭐ 현재 ETL (v4)
 │   ├── verification_reports_v4.json  # v4 중간 산출물
 │   ├── dashboard.py                  # Streamlit 대시보드
