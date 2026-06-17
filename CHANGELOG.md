@@ -34,6 +34,10 @@ All notable changes to this project will be documented in this file.
   - 대상 (common_key, year)에 locked 분야가 하나라도 있으면 편집 전체가 **409로 차단**(`blocked_locked` 반환, 부분 편집 없음)
   - **admin 권한 + `admin_override: true`** 전송 시에만 locked 분야를 건너뛰고 나머지를 편집
   - 단일편집(PATCH /items/:id)·transition은 기존대로 개별 lock guard(403) 유지
+- **SPEC-DB-001 Phase 6 (검색·연도추적 parity)**: T6.1(검색)·T6.2(연도 diff)는 Phase 4(items search_field·changes)에서 구현, T6.3 검증
+  - 키워드 검색은 **ILIKE 부분검색** 채택 — tsvector simple은 한국어 형태소 미지원으로 재현율 낮음(실측 '검사실' ILIKE 1698 vs tsvector 845, AC-7 재현율 ≥ 현행 충족)
+  - canonical 쿼리셋 `pdf/verify_search.sql`(S1~S7): item# 부분검색·키워드·edit_type 조인·수정자/일자·연도 diff(2026 NEW 154/DELETED 4/공통 1481)
+  - tsvector GIN 인덱스는 차기 한국어 토크나이저(mecab/pgroonga)용 보존; PG-vs-Mongo 직접 parity는 Phase 7 컷오버 검증으로 이연(Mongo 데이터 부재)
 
 ### Security
 - **DEPS(backend)**: 의존성 취약점 정리 — uuid override(^11.1.1 via exceljs), form-data 4.0.6, qs 6.15.2 (npm audit 0)

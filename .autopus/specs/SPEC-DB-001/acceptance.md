@@ -75,6 +75,11 @@ When  키워드 '전문의' 검색
 Then  canonical 기대 ID를 모두 포함 (재현율 ≥ 현행; 토크나이저 차이로 인한 초과는 허용)
 When  수정자='admin' & 수정일자 범위 검색
 Then  item_revision 조인으로 해당 개정 항목을 반환
+Note  Phase 6 결정: 키워드 검색은 tsvector @@(simple)이 아닌 ILIKE 부분검색 사용 — 한국어 형태소
+      미지원(D5)으로 tsvector simple 재현율이 substring 대비 낮음(실측 '검사실': ILIKE 1698 vs
+      tsvector 845). tsvector GIN 인덱스는 차기 한국어 토크나이저(mecab/pgroonga)용 보존.
+      canonical 쿼리셋 = pdf/verify_search.sql (S1~S7). 본 검증은 PG 자기일관성 — Mongo 데이터
+      drop으로 PG-vs-Mongo 직접 비교는 Phase 7 컷오버 검증으로 이연.
 ```
 
 ### AC-8: 연도별 6필드 diff (REQ-9)
