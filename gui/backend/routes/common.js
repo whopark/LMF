@@ -1,9 +1,8 @@
 const { serverError } = require('../utils/httpError');
 const express = require('express');
-const Item = require('../models/Item');
-const { requireApiKey } = require('../middleware/auth');
 const { requireAuth } = require('../middleware/roles');
 const { applyCommonEdit, COMMON_SHARED_FIELDS } = require('../services/revisionTxn');
+const commonRepo = require('../repositories/commonRepo');
 
 const router = express.Router();
 
@@ -27,23 +26,18 @@ function toCommonResponse(item) {
 
 // GET /api/common/:key — items sharing this common_key, scoped to ONE year (G-1).
 // ?year=<n> selects a specific year; default = latest year present (one row per area).
+// Read path: engine via commonRepo factory (mongo|pg).
 router.get('/:key', async (req, res) => {
   try {
-    const { key } = req.params;
-    const query = { common_key: key };
-    if (req.query.year) {
-      query.year = parseInt(req.query.year, 10);
-    } else {
-      const latest = await Item.findOne({ common_key: key }).sort({ year: -1 }).select('year').lean();
-      if (!latest) return res.status(404).json({ message: 'No items found for this common_key' });
-      query.year = latest.year;
-    }
-
-    const items = await Item.find(query).sort({ area_code: 1 }).lean();
-    if (items.length === 0) {
+    const result = await commonRepo.getCommon(req.params.key, req.query.year);
+    if (!result) {
       return res.status(404).json({ message: 'No items found for this common_key' });
     }
-    res.json({ common_key: key, year: query.year, items: items.map(toCommonResponse) });
+    res.json({
+      common_key: result.common_key,
+      year: result.year,
+      items: result.items.map(toCommonResponse),
+    });
   } catch (err) {
     serverError(res, err, 'common.js');
   }
@@ -51,7 +45,8 @@ router.get('/:key', async (req, res) => {
 
 // PATCH /api/common/:key — bulk update shared fields across all matching areas (G1/G7).
 // Body: { question?, description?, score?, area_codes?, edit_types?, reason? }
-// All item updates + revisions commit atomically; field_specific_description is never propagated.
+// WRITE path stays on Mongo (applyCommonEdit) until Phase 4b; field_specific_description
+// is never propagated; all item updates + revisions commit atomically.
 router.patch('/:key', requireAuth('editor'), async (req, res) => {
   try {
     const { key } = req.params;
