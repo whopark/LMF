@@ -33,4 +33,31 @@ async function listForExport(filters) {
   return rows.map(toRevisionLean)
 }
 
-module.exports = { listForExport }
+// Revision-history search (GET /api/revisions) with pagination. user uses ILIKE (substring,
+// matching the Mongo regex). edit_types matches ANY of the requested codes in the jsonb array.
+function applyListFilters(q, filters) {
+  if (filters.item_number) q.where('item_number', filters.item_number)
+  if (filters.area_code) q.where('area_code', filters.area_code)
+  if (filters.year) q.where('year', parseInt(filters.year))
+  if (filters.user) q.where('revised_by', 'ilike', `%${String(filters.user)}%`)
+  if (filters.score_changed === 'true') q.where('score_changed', true)
+  if (filters.edit_types) {
+    const types = Array.isArray(filters.edit_types)
+      ? filters.edit_types
+      : String(filters.edit_types).split(',').map(t => t.trim()).filter(Boolean)
+    if (types.length > 0) {
+      q.whereRaw('EXISTS (SELECT 1 FROM jsonb_array_elements_text(edit_types) e WHERE e = ANY(?))', [types])
+    }
+  }
+  return q
+}
+
+async function list(filters, { skip, limit }) {
+  const k = knex()
+  const [{ count }] = await applyListFilters(k('item_revision'), filters).count({ count: '*' })
+  const rows = await applyListFilters(k('item_revision'), filters)
+    .orderBy('revised_at', 'desc').offset(skip).limit(limit)
+  return { revisions: rows.map(toRevisionLean), total: parseInt(count, 10) }
+}
+
+module.exports = { listForExport, list }

@@ -1,9 +1,9 @@
 const { serverError } = require('../utils/httpError');
 const express = require('express');
-const Revision = require('../models/Revision');
 const { EditTypeCode, DEFAULT_CODES } = require('../models/EditTypeCode');
 const { requireAuth } = require('../middleware/roles');
 const { unlockItem, transitionItem } = require('../services/revisionTxn');
+const revisionRepo = require('../repositories/revisionRepo');
 
 const router = express.Router();
 
@@ -25,29 +25,12 @@ router.get('/edit-type-codes', async (req, res) => {
 // cutover is out of Phase 4b scope).
 router.get('/', async (req, res) => {
   try {
-    const { item_number, area_code, year, user, score_changed, edit_types, page = 1, limit = 50 } = req.query;
-
-    const query = {};
-    if (item_number) query.item_number = item_number;
-    if (area_code) query.area_code = area_code;
-    if (year) query.year = parseInt(year);
-    if (user) query.user = new RegExp(String(user).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-    if (score_changed === 'true') query.score_changed = true;
-    if (edit_types) {
-      const types = Array.isArray(edit_types) ? edit_types : String(edit_types).split(',').map(t => t.trim()).filter(Boolean);
-      if (types.length > 0) query.edit_types = { $in: types };
-    }
-
-    const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 200);
-    const safePage = Math.max(parseInt(page) || 1, 1);
-
-    const total = await Revision.countDocuments(query);
-    const revisions = await Revision.find(query)
-      .sort({ at: -1 })
-      .skip((safePage - 1) * safeLimit)
-      .limit(safeLimit)
-      .lean();
-
+    const safeLimit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 200);
+    const safePage = Math.max(parseInt(req.query.page) || 1, 1);
+    const { revisions, total } = await revisionRepo.list(req.query, {
+      skip: (safePage - 1) * safeLimit,
+      limit: safeLimit,
+    });
     res.json({ revisions, total, page: safePage, totalPages: Math.ceil(total / safeLimit) });
   } catch (err) {
     serverError(res, err, 'revisions.js');

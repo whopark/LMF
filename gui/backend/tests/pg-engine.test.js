@@ -166,6 +166,24 @@ describe('SPEC-DB-001 Phase 8 · PG engine integration', () => {
     expect(revs.length).toBe(0) // no revisions seeded
   })
 
+  it('revisionRepo.list paginates revision history + filters (edit_types jsonb, user ILIKE)', async (ctx) => {
+    if (!pgUp) return ctx.skip()
+    await services.applyItemEdit({
+      id: '01.01.010.001.2026', updates: { score: 7 },
+      editTypes: ['CHANGE_SCORE'], rawReason: 'r', user: 'kim', role: 'editor', ip: '::1',
+    })
+    const all = await revisionRepo.list({}, { skip: 0, limit: 50 })
+    expect(all.total).toBe(1)
+    expect(all.revisions[0].item_number).toBe('01.010.001')
+    expect(all.revisions[0].user).toBe('kim')
+    expect(all.revisions[0].edit_types).toContain('CHANGE_SCORE')
+    expect(all.revisions[0].score_changed).toBe(true)
+    const hit = await revisionRepo.list({ edit_types: 'CHANGE_SCORE', user: 'ki' }, { skip: 0, limit: 50 })
+    expect(hit.total).toBe(1)
+    const miss = await revisionRepo.list({ edit_types: 'MODIFY_DESC' }, { skip: 0, limit: 50 })
+    expect(miss.total).toBe(0)
+  })
+
   it('transitionItem advances the workflow with an atomic guard', async (ctx) => {
     if (!pgUp) return ctx.skip()
     const r = await services.transitionItem({ id: '01.01.010.001.2026', to: 'draft', role: 'editor' })

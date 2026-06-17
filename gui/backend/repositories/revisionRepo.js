@@ -10,4 +10,5 @@ function impl() {
 
 module.exports = {
   listForExport: (...args) => impl().listForExport(...args),
+  list: (...args) => impl().list(...args),
 }
