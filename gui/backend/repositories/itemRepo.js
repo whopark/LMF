@@ -15,4 +15,5 @@ module.exports = {
   listItems: (...args) => impl().listItems(...args),
   getCategories: (...args) => impl().getCategories(...args),
   getByNumber: (...args) => impl().getByNumber(...args),
+  listAllForExport: (...args) => impl().listAllForExport(...args),
 }

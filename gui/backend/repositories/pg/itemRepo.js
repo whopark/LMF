@@ -85,4 +85,15 @@ async function getByNumber(code) {
   return rows.map(toLean)
 }
 
-module.exports = { listItems, getCategories, getByNumber }
+// Export: all matching items (no paging), sorted area→sub_category→item_order.
+async function listAllForExport(filters) {
+  const k = knex()
+  const rows = await applyFilters(base(k), k, filters)
+    .select(cols(k))
+    .orderBy('ci.area_code', 'asc')
+    .orderBy('sc.display_order', 'asc')
+    .orderBy('ci.item_order', 'asc')
+  return rows.map(toLean)
+}
+
+module.exports = { listItems, getCategories, getByNumber, listAllForExport }

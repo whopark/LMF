@@ -19,7 +19,7 @@ const ORIG = { DB_ENGINE: process.env.DB_ENGINE, PG_URL: process.env.PG_URL }
 let k
 let scId
 let pgUp = false
-let filterRepo, itemRepo, commonRepo, services, closeKnex
+let filterRepo, itemRepo, commonRepo, revisionRepo, services, closeKnex
 
 async function seedReference() {
   await k('area').insert([
@@ -64,6 +64,7 @@ beforeAll(async () => {
     filterRepo = require('../repositories/filterRepo')
     itemRepo = require('../repositories/itemRepo')
     commonRepo = require('../repositories/commonRepo')
+    revisionRepo = require('../repositories/revisionRepo')
     services = require('../services/revisionTxn')
     pgUp = true
   } catch (e) {
@@ -153,6 +154,16 @@ describe('SPEC-DB-001 Phase 8 · PG engine integration', () => {
     })
     expect(ov.updated).toEqual(['01.010.001'])
     expect(ov.skipped_locked).toEqual(['07.010.001'])
+  })
+
+  it('export repos: listAllForExport (items, area-sorted) + listForExport (revisions)', async (ctx) => {
+    if (!pgUp) return ctx.skip()
+    const items = await itemRepo.listAllForExport({ year: '2026' })
+    expect(items.length).toBe(2)
+    expect(items[0].area_code).toBe('01') // sorted area asc
+    expect(items[0].area_name).toBe('검사실운영')
+    const revs = await revisionRepo.listForExport({ year: '2026' })
+    expect(revs.length).toBe(0) // no revisions seeded
   })
 
   it('transitionItem advances the workflow with an atomic guard', async (ctx) => {

@@ -82,4 +82,10 @@ async function getByNumber(code) {
   return Item.find({ item_number: code }).sort({ year: -1 }).lean()
 }
 
-module.exports = { listItems, getCategories, getByNumber }
+// Export: all matching items (no paging), sorted area→sub_category→item_order.
+async function listAllForExport(filters) {
+  const query = await buildQuery(filters)
+  return Item.find(query).sort({ area_code: 1, sub_category_order: 1, item_order: 1 }).lean()
+}
+
+module.exports = { listItems, getCategories, getByNumber, listAllForExport }
