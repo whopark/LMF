@@ -15,9 +15,10 @@ function pickSnapshot(doc) {
   return snap
 }
 
-function httpError(message, status) {
+function httpError(message, status, extra) {
   const e = new Error(message)
   e.status = status
+  if (extra) Object.assign(e, extra) // e.g. { valid_transitions: [...] } for transition 400
   return e
 }
 

@@ -6,6 +6,8 @@
 const { knex } = require('../../config/db')
 const { base, cols, toLean, decodeId } = require('./itemQuery')
 const { buildReasonFields } = require('../../utils/reason')
+const { hasRole } = require('../../middleware/roles')
+const { isValidTransition, getStatusUpdates, VALID_TRANSITIONS } = require('../../utils/revisionState')
 const { pickSnapshot, httpError } = require('../../services/revisionRules')
 
 // mongo-style update keys -> PG checklist_item columns (question/description -> overrides).
@@ -135,4 +137,49 @@ async function insertAudit(trx, event, actor, target, detail) {
   })
 }
 
-module.exports = { applyItemEdit, applyCommonEdit }
+// G4: admin unlock — clear lock, return to 'review', audit the reason.
+async function unlockItem({ id, rawReason, user, role }) {
+  const ref = decodeId(id)
+  if (!ref) throw httpError('Invalid item ID', 400)
+  const k = knex()
+  return k.transaction(async (trx) => {
+    const rows = await whereRef(base(trx).select(cols(trx)), ref)
+    if (!rows.length) throw httpError('Item not found', 404)
+    const existing = toLean(rows[0])
+    if (!existing.revision.locked) throw httpError('Item is not locked', 400)
+
+    await trx('checklist_item').where(pkWhere(ref)).update({ locked: false, rev_status: 'review' })
+    await insertAudit(trx, 'unlock', user, existing.item_number, { role, reason: String(rawReason ?? '') })
+    return toLean((await whereRef(base(trx).select(cols(trx)), ref))[0])
+  })
+}
+
+// G5: workflow status transition with an atomic status+lock guard (TOCTOU-safe).
+async function transitionItem({ id, to, role }) {
+  const ref = decodeId(id)
+  if (!ref) throw httpError('Invalid item ID', 400)
+  const k = knex()
+  return k.transaction(async (trx) => {
+    const rows = await whereRef(base(trx).select(cols(trx)), ref)
+    if (!rows.length) throw httpError('Item not found', 404)
+    const cur = toLean(rows[0])
+    const from = cur.revision.status || 'none'
+    if (cur.revision.locked) throw httpError('Item is locked (final). Only admin unlock allowed.', 403)
+    if (to === 'final' && !hasRole(role, 'approver')) throw httpError('Transition to final requires approver role or above', 403)
+    if (!isValidTransition(from, to)) {
+      throw httpError(`Invalid transition: ${from} → ${to}`, 400, { valid_transitions: VALID_TRANSITIONS[from] || [] })
+    }
+    // Translate the mongo-keyed getStatusUpdates() to PG columns.
+    const mongoSet = getStatusUpdates(to)
+    const set = { rev_status: mongoSet['revision.status'] }
+    if ('revision.locked' in mongoSet) set.locked = mongoSet['revision.locked']
+    if ('revision.revised' in mongoSet) set.revised = mongoSet['revision.revised']
+
+    const cnt = await trx('checklist_item')
+      .where({ ...pkWhere(ref), rev_status: from, locked: false }).update(set)
+    if (cnt === 0) throw httpError('Item state changed concurrently — please retry', 409)
+    return toLean((await whereRef(base(trx).select(cols(trx)), ref))[0])
+  })
+}
+
+module.exports = { applyItemEdit, applyCommonEdit, unlockItem, transitionItem }

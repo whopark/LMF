@@ -1,11 +1,13 @@
 // SPEC-DB-001 Phase 4b · writeRepo Mongoose impl. item update + revision + audit commit
-// atomically via a replica-set session (G1). applyItemEdit (4b-1), applyCommonEdit (4b-2).
+// atomically via a replica-set session (G1). applyItemEdit/applyCommonEdit/unlockItem/transitionItem.
 const mongoose = require('mongoose')
 const Item = require('../../models/Item')
 const Revision = require('../../models/Revision')
 const AuditLog = require('../../models/AuditLog')
 const { withTransaction } = require('../../utils/withTransaction')
 const { buildReasonFields } = require('../../utils/reason')
+const { hasRole } = require('../../middleware/roles')
+const { isValidTransition, getStatusUpdates, VALID_TRANSITIONS } = require('../../utils/revisionState')
 const { pickSnapshot, httpError } = require('../../services/revisionRules')
 
 async function applyItemEdit({ id, updates, editTypes = [], rawReason, user, role, ip }) {
@@ -82,4 +84,47 @@ async function applyCommonEdit({ key, areaCodes, year, updates, editTypes = [], 
   })
 }
 
-module.exports = { applyItemEdit, applyCommonEdit }
+// G4: admin unlock — clear lock, return to 'review', record reason in audit log.
+async function unlockItem({ id, rawReason, user, role, ip }) {
+  if (!mongoose.Types.ObjectId.isValid(id)) throw httpError('Invalid item ID', 400)
+  return withTransaction(async (session) => {
+    const existing = await Item.findById(id).session(session).lean()
+    if (!existing) throw httpError('Item not found', 404)
+    if (!existing.revision?.locked) throw httpError('Item is not locked', 400)
+
+    const updated = await Item.findByIdAndUpdate(
+      id,
+      { $set: { 'revision.locked': false, 'revision.status': 'review' } },
+      { new: true, session },
+    ).lean()
+
+    await AuditLog.create([{
+      user, role, action: 'unlock', resource_type: 'item', resource_id: String(id),
+      details: { item_number: existing.item_number, reason: String(rawReason ?? '') }, ip,
+    }], { session })
+
+    return updated
+  })
+}
+
+// G5: workflow status transition with an atomic status+lock guard (TOCTOU-safe).
+async function transitionItem({ id, to, role }) {
+  if (!mongoose.Types.ObjectId.isValid(id)) throw httpError('Invalid item ID', 400)
+  const item = await Item.findById(id).lean()
+  if (!item) throw httpError('Item not found', 404)
+  const from = item.revision?.status || 'none'
+  if (item.revision?.locked) throw httpError('Item is locked (final). Only admin unlock allowed.', 403)
+  if (to === 'final' && !hasRole(role, 'approver')) throw httpError('Transition to final requires approver role or above', 403)
+  if (!isValidTransition(from, to)) {
+    throw httpError(`Invalid transition: ${from} → ${to}`, 400, { valid_transitions: VALID_TRANSITIONS[from] || [] })
+  }
+  const updated = await Item.findOneAndUpdate(
+    { _id: id, 'revision.status': from, 'revision.locked': { $ne: true } },
+    { $set: getStatusUpdates(to) },
+    { new: true },
+  ).lean()
+  if (!updated) throw httpError('Item state changed concurrently — please retry', 409)
+  return updated
+}
+
+module.exports = { applyItemEdit, applyCommonEdit, unlockItem, transitionItem }

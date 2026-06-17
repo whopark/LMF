@@ -1,22 +1,18 @@
 // Design Ref: §5.3 — transactional orchestration for revision writes (G1).
-// Phase 4b: applyItemEdit (4b-1) + applyCommonEdit (4b-2) delegate to the engine write repo
-// (mongo|pg). unlockItem stays on Mongo until Phase 4b-3. Engine-agnostic gating + pure rules
-// (snapshot/shared-fields/httpError) live in revisionRules.js.
-const Item = require('../models/Item');
-const AuditLog = require('../models/AuditLog');
-const { withTransaction } = require('../utils/withTransaction');
+// Phase 4b: all write ops (applyItemEdit/applyCommonEdit/unlockItem/transitionItem) delegate
+// to the engine write repo (mongo|pg). This facade keeps the engine-agnostic guards: sensitive
+// edit-type gating (G6), shared-field filtering (G7), and the unlock reason requirement.
 const { assertEditTypesAllowed } = require('../constants/sensitiveEditTypes');
 const { httpError, COMMON_SHARED_FIELDS } = require('./revisionRules');
 const writeRepo = require('../repositories/writeRepo');
 
-// G1: single-item edit. G6 sensitive-type gating is engine-agnostic → runs before delegation.
+// G1: single-item edit. G6 sensitive-type gating runs before delegation.
 async function applyItemEdit(args) {
   assertEditTypesAllowed(args.editTypes || [], args.role);
   return writeRepo.applyItemEdit(args);
 }
 
-// G1 + G7: bulk propagation across a common_key. Gating + shared-field filtering are
-// engine-agnostic; the engine write repo performs the atomic propagation.
+// G1 + G7: bulk propagation. Gating + shared-field filtering are engine-agnostic.
 async function applyCommonEdit(args) {
   assertEditTypesAllowed(args.editTypes || [], args.role); // G6
   const safeUpdates = {};
@@ -27,30 +23,16 @@ async function applyCommonEdit(args) {
   return writeRepo.applyCommonEdit({ ...args, updates: safeUpdates });
 }
 
-// G4: admin unlock — clears the lock, returns the item to 'review', records the reason.
-// Still Mongo (Phase 4b-3).
-async function unlockItem({ id, rawReason, user, role, ip }) {
-  const reason = rawReason === null || rawReason === undefined ? '' : String(rawReason);
+// G4: admin unlock — reason requirement is engine-agnostic.
+async function unlockItem(args) {
+  const reason = args.rawReason === null || args.rawReason === undefined ? '' : String(args.rawReason);
   if (reason.trim().length === 0) throw httpError('Unlock reason is required', 400);
-
-  return withTransaction(async (session) => {
-    const existing = await Item.findById(id).session(session).lean();
-    if (!existing) throw httpError('Item not found', 404);
-    if (!existing.revision?.locked) throw httpError('Item is not locked', 400);
-
-    const updated = await Item.findByIdAndUpdate(
-      id,
-      { $set: { 'revision.locked': false, 'revision.status': 'review' } },
-      { new: true, session },
-    ).lean();
-
-    await AuditLog.create([{
-      user, role, action: 'unlock', resource_type: 'item', resource_id: String(id),
-      details: { item_number: existing.item_number, reason }, ip,
-    }], { session });
-
-    return updated;
-  });
+  return writeRepo.unlockItem(args);
 }
 
-module.exports = { applyItemEdit, applyCommonEdit, unlockItem, COMMON_SHARED_FIELDS };
+// G5: workflow status transition (validation + atomic guard live in the engine repo).
+async function transitionItem(args) {
+  return writeRepo.transitionItem(args);
+}
+
+module.exports = { applyItemEdit, applyCommonEdit, unlockItem, transitionItem, COMMON_SHARED_FIELDS };
